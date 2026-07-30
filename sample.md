@@ -8,7 +8,7 @@ The viewer reads a single text file and renders it as live HTML, sanitized with 
 
 ## Formatting it supports
 
-Markdown rendered here carries the usual range: **bold**, *italic*, `inline code`, and [links](https://github.com/anderix/axe). Lists work too:
+Markdown rendered here carries the usual range: **bold**, *italic*, `inline code`, and [links](https://github.com/excelano/axe). Lists work too:
 
 - Each item sits on the brand's body type and spacing
 - Nested lists indent predictably
