@@ -38,7 +38,7 @@ install -m 0755 "$ROOT/cli/cleave.py" "$STAGE/usr/bin/cleave"
 # a newly inlined file cannot ship in the tool and go missing from the package.
 # It is only what cleave reads — not the whole framework: no kitchen-sink, no
 # brand-builder, no samples.
-ASSETS=$(cd "$ROOT/cli" && python3 -c 'import cleave; print("\n".join(cleave.ASSETS))')
+ASSETS=$(cd "$ROOT/cli" && PYTHONDONTWRITEBYTECODE=1 python3 -c 'import cleave; print("\n".join(cleave.ASSETS))')
 [ -n "$ASSETS" ] || { echo "could not read the asset list from cli/cleave.py" >&2; exit 1; }
 while IFS= read -r rel; do
     [ -f "$ROOT/$rel" ] || { echo "cleave lists an asset that is not here: $rel" >&2; exit 1; }
