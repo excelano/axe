@@ -12,14 +12,59 @@ place. This is the ship-it counterpart to the live viewer, which needs an
 HTTP server because it fetch()es the document (browsers block fetch() of
 local files).
 
-cleave finds the Axe assets relative to its own location, so a symlink into
-~/bin keeps working:  ln -s "$PWD/tools/cleave.py" ~/bin/cleave
+cleave inlines the Axe viewer, so it needs the Axe assets at run time. See
+axe_root() for where it looks for them.
 """
 import argparse
+import os
 import sys
 from pathlib import Path
 
-AXE_ROOT = Path(__file__).resolve().parent.parent   # tools/ -> repo root
+PACKAGED_ROOT = Path("/usr/share/cleave")
+
+# Every Axe file cleave reads, relative to the Axe root. This is the list the
+# Debian packaging installs into /usr/share/cleave — packaging/build-deb.sh
+# reads it from here rather than keeping its own copy, so a newly inlined asset
+# cannot ship in the tool and go missing from the package. Teach cleave to
+# inline something new, and add it here in the same edit.
+ASSETS = (
+    "view/index.html",
+    "axe.css",
+    "default.css",
+    "calendar.css",
+    "calendar.js",
+    "theme.js",
+    "dependencies/marked.min.js",
+    "dependencies/purify.min.js",
+)
+
+
+def axe_root():
+    """Locate the Axe assets cleave inlines.
+
+    Three candidates, each proved by the same probe rather than assumed, so a
+    candidate that exists but is not an Axe tree falls through instead of
+    half-working:
+
+      1. $AXE_ROOT, when set. An explicit override always wins.
+      2. cleave's own grandparent -- cli/ -> repo root. This is a checkout,
+         and it is checked BEFORE the packaged copy on purpose: running
+         cleave from a working tree should bake that tree's viewer, not
+         whatever version happens to be installed system-wide.
+      3. /usr/share/cleave, the assets the Debian package ships as its own
+         private data. Reached when cleave is /usr/bin/cleave, whose
+         grandparent is /usr and holds no viewer.
+    """
+    env = os.environ.get("AXE_ROOT")
+    if env:
+        return Path(env).expanduser()
+    for candidate in (Path(__file__).resolve().parent.parent, PACKAGED_ROOT):
+        if (candidate / "view" / "index.html").is_file():
+            return candidate
+    return PACKAGED_ROOT   # nothing found; the template check below reports it
+
+
+AXE_ROOT = axe_root()
 TEMPLATE = AXE_ROOT / "view" / "index.html"
 
 # Exact asset references in the template, with their 4-space indentation.
@@ -87,7 +132,9 @@ def main():
     if ext not in NEEDS:
         sys.exit(f"Error: unsupported type '.{ext}'. Use csv, tsv, md, markdown, ics, or ical.")
     if not TEMPLATE.is_file():
-        sys.exit(f"Error: viewer template not found at {TEMPLATE}")
+        sys.exit(f"Error: viewer template not found at {TEMPLATE}\n"
+                 f"cleave needs the Axe assets to inline. Install the cleave "
+                 f"package, run it from an Axe checkout, or set AXE_ROOT to one.")
 
     view = "slides" if args.slides else args.view
     if view != "auto" and ext not in ("md", "markdown"):

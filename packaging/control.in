@@ -1,0 +1,24 @@
+Package: cleave
+Version: @VERSION@
+Architecture: all
+Maintainer: David M. Anderson <david.anderson@excelano.com>
+Depends: python3
+Section: utils
+Priority: optional
+Homepage: https://github.com/excelano/axe
+Description: Bake a CSV, Markdown, or iCalendar file into one portable HTML file
+ cleave turns a document into a single self-contained .html that renders
+ itself: the file carries the document, the Axe viewer, and only the assets
+ that format actually needs. The recipient opens it straight from disk, with
+ no server and no internet, and sees a rendered table, document, slide deck,
+ or calendar rather than a download prompt.
+ .
+ It is the ship-it counterpart to the live Axe viewer, which needs an HTTP
+ server because it fetches the document, and browsers refuse to fetch local
+ files. Markdown becomes a document or, with --slides, a native slide deck.
+ A brand stylesheet can be inlined with --brand so the output carries your
+ palette instead of the default one.
+ .
+ The Axe assets cleave inlines are installed as this package's own data
+ under /usr/share/cleave. This package does not deploy Axe as a web
+ framework; sites get Axe from its repository.

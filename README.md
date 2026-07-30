@@ -51,7 +51,18 @@ cli/cleave.py team.ics             # -> team.html (a calendar)
 cli/cleave.py report.md --brand mybrand.css   # inline a brand palette
 ```
 
-For Markdown the render mode follows the same rules as the live viewer: `--slides` (or a `mode: slides` frontmatter key) makes a deck, otherwise it's a document. The output is portable and offline — email it, drop it on a share, open it from a USB stick. cleave finds the Axe assets relative to its own location, so symlinking it onto your PATH works: `ln -s "$PWD/cli/cleave.py" ~/bin/cleave`. One caveat: the default output name swaps the extension for `.html`, so `report.md` and `report.csv` would both target `report.html` — pass an explicit output name to disambiguate.
+For Markdown the render mode follows the same rules as the live viewer: `--slides` (or a `mode: slides` frontmatter key) makes a deck, otherwise it's a document. The output is portable and offline — email it, drop it on a share, open it from a USB stick. One caveat: the default output name swaps the extension for `.html`, so `report.md` and `report.csv` would both target `report.html` — pass an explicit output name to disambiguate.
+
+On Debian, install it as a package and it works from anywhere:
+
+```bash
+curl -fsSL https://excelano.com/apt/setup.sh | sudo sh   # one-time
+sudo apt install cleave
+```
+
+The package is named for the tool, not the framework. It installs the `cleave` command plus the Axe assets that command inlines, as its own data under `/usr/share/cleave` — it does not deploy Axe as a web framework, and nothing on a Debian box consumes Axe from there. Sites get Axe from this repository, by symlink or by vendoring.
+
+From a checkout, symlinking onto your PATH works too: `ln -s "$PWD/cli/cleave.py" ~/bin/cleave`. cleave looks for the Axe assets in three places, in order — `$AXE_ROOT` if you set it, its own grandparent directory, then `/usr/share/cleave`. The checkout is checked before the package on purpose: running cleave from a working tree bakes that tree's viewer, not whatever version happens to be installed.
 
 ## Structure
 
