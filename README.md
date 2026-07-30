@@ -85,6 +85,8 @@ view/
 
 Everything in Axe is a web asset a site serves, with one exception: `cli/` is the command-line side, and a site that deploys Axe should exclude it. It is a directory rather than a loose file so the exclusion is a single unambiguous rule, and so that nothing there is ever mistaken for something to serve. `cleave` needs the viewer and the stylesheets to do its job; the viewer and the stylesheets never need `cleave`.
 
+The same one-way rule explains why two repositories that work together sit in different GitHub organizations. Axe lives in `excelano` because Excelano products ride it directly; `browse` lives in `anderix` because it is a personal-site tool that consumes Axe rather than something Axe or any Excelano deliverable depends on. The arrow points one way — browse needs the viewer and the stylesheets, and neither needs browse — so promoting the dependency without dragging the dependent along is the correct shape, not an oversight. Consumers are unaffected either way: sites pick Axe up through an `axe -> ~/axe` filesystem symlink that never knew which organization owned the repository.
+
 Each project provides its own `brand.css` defining the visual identity. `axe.css` is universal and shared. Project-specific component classes go in the project's own stylesheet.
 
 ```css

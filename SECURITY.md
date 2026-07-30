@@ -33,7 +33,7 @@ A file produced by `cli/cleave.py` carries its document inlined in a hidden `<te
 
 ## No server-side code
 
-The viewer is entirely client-side — `view/index.html` plus the vendored scripts. It has no PHP, reads no filesystem, and serves nothing it isn't pointed at. Directory browsing used to live here as a `list.php` backend; it now lives in a separate tool, [browse](https://github.com/anderix/browse), which carries the only server-side surface and its own `SECURITY.md`. Deploy browse only where you actually want directory listing, and confine it there.
+The viewer is entirely client-side — `view/index.html` plus the vendored scripts. It has no PHP, reads no filesystem, and serves nothing it isn't pointed at. Directory browsing used to live here as a `list.php` backend; it now lives in a separate tool, [browse](https://github.com/anderix/browse), which carries the only server-side surface and its own `SECURITY.md`. That tool is in a different GitHub organization (`anderix`, where this repository is `excelano`), so reviewing Axe does not review it — read its `SECURITY.md` separately before deploying it. Deploy browse only where you actually want directory listing, and confine it there.
 
 ## Operator responsibilities
 
