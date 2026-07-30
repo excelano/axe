@@ -1,0 +1,4 @@
+# Byte-compiled cache from importing cli/cleave.py (packaging/build-deb.sh
+# reads its ASSETS list that way).
+__pycache__/
+*.pyc
