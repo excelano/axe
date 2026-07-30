@@ -29,7 +29,7 @@ External URLs (`?url=https://…`) are **denied by default**. Rendering third-pa
 
 ## Baked (embedded) documents
 
-A file produced by `tools/cleave.py` carries its document inlined in a hidden `<textarea id="axe-embed">` and renders it instead of fetching. The document still passes through the same renderers and the same DOMPurify sanitization as the fetched path, so a baked file carries no attack surface the live viewer does not — the only difference is where the bytes come from. The document is escaped as RCDATA (`&` and `<`) so it cannot break out of the textarea, and because nothing is fetched, a baked file makes no network requests at all. Treat a baked `.html` as exactly as trustworthy as the document and the brand CSS that went into it.
+A file produced by `cli/cleave.py` carries its document inlined in a hidden `<textarea id="axe-embed">` and renders it instead of fetching. The document still passes through the same renderers and the same DOMPurify sanitization as the fetched path, so a baked file carries no attack surface the live viewer does not — the only difference is where the bytes come from. The document is escaped as RCDATA (`&` and `<`) so it cannot break out of the textarea, and because nothing is fetched, a baked file makes no network requests at all. Treat a baked `.html` as exactly as trustworthy as the document and the brand CSS that went into it.
 
 ## No server-side code
 

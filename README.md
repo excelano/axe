@@ -41,17 +41,17 @@ Any other static server does the job too — for example `php -S localhost:8000`
 
 ## Shipping Documents (cleave)
 
-When you want to hand someone a rendered document they can just open — no server, no internet — bake it with `tools/cleave.py`. It inlines the document and only the assets that format needs into one self-contained `.html` that the viewer renders in place (over `file://`), sidestepping the fetch restriction above.
+When you want to hand someone a rendered document they can just open — no server, no internet — bake it with `cli/cleave.py`. It inlines the document and only the assets that format needs into one self-contained `.html` that the viewer renders in place (over `file://`), sidestepping the fetch restriction above.
 
 ```bash
-tools/cleave.py report.md            # -> report.html (a document)
-tools/cleave.py deck.md --slides     # -> deck.html (a slide deck)
-tools/cleave.py data.csv             # -> data.html (an interactive table)
-tools/cleave.py team.ics             # -> team.html (a calendar)
-tools/cleave.py report.md --brand mybrand.css   # inline a brand palette
+cli/cleave.py report.md            # -> report.html (a document)
+cli/cleave.py deck.md --slides     # -> deck.html (a slide deck)
+cli/cleave.py data.csv             # -> data.html (an interactive table)
+cli/cleave.py team.ics             # -> team.html (a calendar)
+cli/cleave.py report.md --brand mybrand.css   # inline a brand palette
 ```
 
-For Markdown the render mode follows the same rules as the live viewer: `--slides` (or a `mode: slides` frontmatter key) makes a deck, otherwise it's a document. The output is portable and offline — email it, drop it on a share, open it from a USB stick. cleave finds the Axe assets relative to its own location, so symlinking it onto your PATH works: `ln -s "$PWD/tools/cleave.py" ~/bin/cleave`. One caveat: the default output name swaps the extension for `.html`, so `report.md` and `report.csv` would both target `report.html` — pass an explicit output name to disambiguate.
+For Markdown the render mode follows the same rules as the live viewer: `--slides` (or a `mode: slides` frontmatter key) makes a deck, otherwise it's a document. The output is portable and offline — email it, drop it on a share, open it from a USB stick. cleave finds the Axe assets relative to its own location, so symlinking it onto your PATH works: `ln -s "$PWD/cli/cleave.py" ~/bin/cleave`. One caveat: the default output name swaps the extension for `.html`, so `report.md` and `report.csv` would both target `report.html` — pass an explicit output name to disambiguate.
 
 ## Structure
 
@@ -67,12 +67,12 @@ sample.md             Demo Markdown document (also the document-view demo and fi
 sample.ics            Demo calendar feed (also the viewer demo and round-trip fixture).
 sample-slides.md      Demo slide deck (also the slides-view demo and fixture).
 kitchen-sink.html     Reference page showing all styled HTML elements.
+brand-builder.html    Generates brand.css from color, font, shape, and shadow inputs.
 README.md             This file.
 dependencies/
   marked.min.js       Markdown parser for the viewer (MIT licensed).
   purify.min.js       DOMPurify — sanitizes rendered Markdown (Apache-2.0 / MPL-2.0).
-tools/
-  brand-builder.html  Generates brand.css from color, font, shape, and shadow inputs.
+cli/                  The command-line side: not web assets, not served.
   cleave.py           Bakes a CSV/Markdown/iCalendar file into one self-contained
                       HTML file that renders from disk (file://) with no server.
 view/
@@ -82,6 +82,8 @@ view/
 ```
 
 ## How Projects Use Axe
+
+Everything in Axe is a web asset a site serves, with one exception: `cli/` is the command-line side, and a site that deploys Axe should exclude it. It is a directory rather than a loose file so the exclusion is a single unambiguous rule, and so that nothing there is ever mistaken for something to serve. `cleave` needs the viewer and the stylesheets to do its job; the viewer and the stylesheets never need `cleave`.
 
 Each project provides its own `brand.css` defining the visual identity. `axe.css` is universal and shared. Project-specific component classes go in the project's own stylesheet.
 
