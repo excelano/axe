@@ -177,18 +177,23 @@ The axe viewer renders `.toml` the same way it renders CSV and Markdown. There i
 view/index.html?url=path/to/inventory.toml
 ```
 
-The mapping is the whole design:
+It renders as a form that has already been filled in and is being read — panels with a header band, a small label above a ruled value, a ticked box for a boolean. That is a presentation, not a mechanism: there are no inputs, nothing focusable, and nothing to submit. It stays `<section>` and `<dl>` in the markup for that reason, because a `<fieldset>` wrapped around no controls, or a disabled `<input>` holding a value, would each tell a screen reader something untrue about the page. Real input chrome was the other way to do this, and a page of boxes reads as greyed-out — the wrong signal for a document whose whole purpose is to be read.
+
+The mapping is the rest of the design:
 
 | In the document | On the page |
 | --- | --- |
-| Keys with scalar values | A field grid, key beside value |
-| A sub-table `[a.b]` | A nested section, heading and all |
-| A table array `[[record]]` | A real table, one row per entry |
-| A table array too deep to line up | A section per entry instead |
-| An inline table `{ ... }` | A nested field grid inside the value |
-| A multi-line string | Prose, with the author's line breaks kept |
-| The four date/time types | A readable date in a `<time>`, literal on hover |
+| Keys with scalar values | A field row: label, then the value on a ruled line |
+| A sub-table `[a.b]` | A panel, with the table's name in its header band |
+| A table array `[[record]]` | A real table filling its panel, one row per entry |
+| A table array too deep to line up | A block per entry instead |
+| An inline table `{ ... }` | A stepped-down grid inside the row |
+| A boolean | A ticked or an empty box |
+| A multi-line string | A filled-in note panel, the author's line breaks kept |
+| The four date/time types | A written-out date in a `<time>`, literal on hover |
 | A path or URL | A link, resolved relative to the document |
+
+Two display transforms are worth knowing about, because both trade a little fidelity for legibility and both keep the original a hover away. Underscores in a key read as spaces, since that is what they are — but hyphens are left alone, because they turn up inside identifiers (`GB-0417-BWM`) as often as between words. And labels are uppercased by CSS rather than in the text, so the key the author wrote is still what sits in the markup and in the accessibility tree.
 
 Two of those rows carry most of the value. A table array is the repeated-record case, and rendering it as an actual table is what stops a reader skipping the file. Linking paths is what turns a metadata file into a finding aid: point a TOML document at the records it describes and the rendered page walks to them. Only `http(s)`, `mailto`, bare email addresses, and relative paths ending in a document extension become links — the scheme test is a whitelist, because a document is untrusted input.
 
