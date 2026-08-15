@@ -283,220 +283,124 @@
         }
 
         /* --- TOML view ---
-           A TOML document renders as a form that has already been filled in
-           and is being read, not one being filled out: panels with a header
-           band, a small label over a ruled value, a ticked box for a boolean.
-           The form is the layout, not the mechanism — there are no inputs
-           here and nothing focusable, which is also why these stay <section>
-           and <dl> elements. A <fieldset> around no controls, or a disabled
-           <input> holding a value, would both tell a screen reader something
-           untrue about the page. Input chrome was the other way to do this
-           and it reads as greyed-out, which is the wrong signal for a
-           document whose whole purpose is to be read.
-
-           As everywhere else in axe the look is assembled from the contract
-           variables alone, so the panels arrive in the host's own palette. */
+           A TOML document is a tree of tables, so the render is a tree of
+           sections: scalars in a field grid, a table array as an actual
+           table. Wider than .md-view because those tables carry columns,
+           narrow enough that prose in them stays readable. Like every other
+           component here it carries no color of its own — the contract
+           variables do the work. */
         .toml-view {
             width: 100%;
-            max-width: 1000px;
+            max-width: 980px;
             margin: 0 auto;
-            padding: 2.25rem 1.5rem 4rem;
+            padding: 2.5rem 1.5rem;
         }
 
-        /* Panels. The page ground is --color-bg and the panel is
-           --color-surface, so the grouping is carried by the brand's own
-           two-tone rather than by a border colour invented here. */
-        .toml-group {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            margin: 0 0 1.25rem;
-            /* Clip the header band and any full-bleed table to the radius. */
-            overflow: hidden;
-        }
-        .toml-group-head {
-            padding: 0.7rem 1.4rem;
-            background: color-mix(in srgb, var(--color-text-muted) 8%, transparent);
-            border-bottom: 1px solid var(--color-border);
-        }
-        .toml-group-head > * {
-            margin: 0;
-            font-size: 1rem;
-            line-height: 1.3;
-        }
-        /* Keys are written lowercase; a panel title is a title. Doing it in
-           CSS rather than in the text keeps the author's key in the markup,
-           the same bargain the uppercased labels make. */
-        .toml-group-head > *::first-letter,
-        .toml-subgroup-head > *::first-letter { text-transform: uppercase; }
-        .toml-group-body { padding: 1.4rem; }
-
-        /* A nested table is a block inside its panel, not another panel. */
-        .toml-subgroup {
-            margin: 1.5rem 0 0;
-            padding: 1.15rem 0 0;
-            border-top: 1px solid var(--color-border);
-        }
-        .toml-group-body > .toml-subgroup:first-child {
-            margin-top: 0;
-            padding-top: 0;
-            border-top: none;
-        }
-        .toml-subgroup-head > * {
-            margin: 0 0 0.9rem;
-            font-size: 0.88rem;
-            letter-spacing: 0.02em;
-        }
-
-        /* The field row: a small label, then the value on a ruled line — the
-           fill-in line of a printed form. Labels are uppercased in CSS, so
-           the key the author wrote is what stays in the markup. */
+        /* Key on the left, value on the right, both baselines aligned. The
+           key column sizes to the longest key (capped) instead of a fixed
+           width, so short-keyed documents don't render a canyon. */
         .toml-fields {
             display: grid;
-            grid-template-columns: minmax(5rem, 11rem) minmax(0, 1fr);
-            gap: 0.9rem 1.25rem;
-            align-items: start;
-            margin: 0;
+            grid-template-columns: minmax(6rem, max-content) minmax(0, 1fr);
+            gap: 0.45rem 1.75rem;
+            margin: 0 0 1.75rem;
         }
         .toml-fields dt {
-            font-size: 0.68rem;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
             color: var(--color-text-muted);
-            padding-top: 0.2rem;
-            overflow-wrap: anywhere;
+            word-break: break-word;
         }
         .toml-fields dd {
             margin: 0;
             min-width: 0;
-            padding-bottom: 0.55rem;
-            border-bottom: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
             overflow-wrap: anywhere;
         }
-        /* A value that draws its own panel supplies its own edge. */
-        .toml-fields dd.is-block {
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-        /* An inline table nests a grid inside a row. It drops the rules so
-           one row does not read as several, and steps its labels down a
-           size behind a rule of its own — at the same weight as the labels
-           above it there is no telling which level a reader is on. */
+        /* An inline table nests one grid inside another; drop the outer
+           bottom margin so it doesn't stack a gap inside a row. */
         .toml-fields .toml-fields {
-            grid-template-columns: minmax(4rem, 8rem) minmax(0, 1fr);
-            gap: 0.45rem 1rem;
-            margin-top: 0.2rem;
-            padding-left: 0.9rem;
-            border-left: 2px solid color-mix(in srgb, var(--color-border) 70%, transparent);
-        }
-        .toml-fields .toml-fields dt {
-            font-size: 0.62rem;
-            font-weight: 500;
-        }
-        .toml-fields .toml-fields dd {
-            padding-bottom: 0;
-            border-bottom: none;
+            margin: 0;
+            gap: 0.2rem 1rem;
         }
 
-        /* A field rule immediately above a block's top rule draws two lines
-           a few pixels apart. The block's line wins. */
-        .toml-group-body > .toml-fields:not(:last-child) dd:last-of-type {
-            padding-bottom: 0;
-            border-bottom: none;
+        .toml-section { margin: 0 0 2rem; }
+        .toml-section > h2,
+        .toml-section > h3,
+        .toml-section > h4,
+        .toml-section > h5,
+        .toml-section > h6 {
+            margin: 0 0 0.75rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        /* Nested sections indent so the tree is legible without drawing
+           lines for it. */
+        .toml-section .toml-section {
+            margin-left: 1rem;
+            padding-left: 1rem;
+            border-left: 2px solid var(--color-border);
         }
 
-        /* A table array fills the width of its panel: the header band above
-           it is already the label, so the padding would only inset it. */
+        /* A table array is the one shape that reads better as a grid than
+           as a list, so it gets a real table — and its own scroll container,
+           since the page body must never scroll sideways. */
         .toml-table-wrap {
             overflow-x: auto;
-            margin: 0;
-        }
-        .toml-group-body > .toml-table-wrap:only-child {
-            margin: -1.4rem;
-            width: calc(100% + 2.8rem);
+            margin: 0 0 1.5rem;
         }
         .toml-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.92rem;
+            font-size: 0.9rem;
         }
         .toml-table th {
             text-align: left;
-            font-size: 0.66rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
             font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
             color: var(--color-text-muted);
-            padding: 0.6rem 1.1rem 0.6rem 0;
-            border-bottom: 1px solid var(--color-border);
+            padding: 0.5rem 0.9rem 0.5rem 0;
+            border-bottom: 2px solid var(--color-border);
             white-space: nowrap;
         }
         .toml-table td {
-            padding: 0.65rem 1.1rem 0.65rem 0;
-            border-bottom: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
+            padding: 0.55rem 0.9rem 0.55rem 0;
+            border-bottom: 1px solid var(--color-border);
             vertical-align: top;
         }
-        .toml-table tbody tr:last-child td { border-bottom: none; }
-        .toml-table tbody tr:hover {
-            background: color-mix(in srgb, var(--color-text-muted) 5%, transparent);
-        }
-        /* Pull the outer columns back in when the table runs full-bleed. */
-        .toml-group-body > .toml-table-wrap:only-child th:first-child,
-        .toml-group-body > .toml-table-wrap:only-child td:first-child { padding-left: 1.4rem; }
-        .toml-group-body > .toml-table-wrap:only-child th:last-child,
-        .toml-group-body > .toml-table-wrap:only-child td:last-child { padding-right: 1.4rem; }
+        .toml-table tbody tr:hover { background: var(--color-surface); }
 
-        /* Values. A number is a figure to be compared down a column, so it
-           takes the mono face and tabular figures. A date is not: it has
-           been written out in words, and setting it in mono would make a
-           filled-in answer look like source again. */
-        .toml-num {
+        /* Value types. Numbers and dates line up in a column, so they take
+           the mono face and tabular figures; a multi-line string is prose
+           and keeps its line breaks. */
+        .toml-num,
+        .toml-date {
             font-family: var(--font-mono);
-            font-size: 0.92em;
             font-variant-numeric: tabular-nums;
         }
         /* The literal the document was written with is on the title, so the
            formatted date is marked as having more behind it — faintly, since
            every date in the file carries it. */
         .toml-date {
-            font-variant-numeric: tabular-nums;
             border-bottom: 1px dotted color-mix(in srgb, var(--color-text-muted) 45%, transparent);
             cursor: help;
         }
-
-        /* A ticked box, drawn rather than an <input>: an accent tick when
-           true, an empty box when false. Checked state is carried by the
-           tick and the border, never by a fill, because no contract variable
-           promises a colour that is legible on top of --color-accent. */
-        .toml-check {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 1.15em;
-            height: 1.15em;
-            border: 1.5px solid color-mix(in srgb, var(--color-text-muted) 45%, transparent);
-            border-radius: calc(var(--radius) * 0.4);
-            font-size: 0.95em;
-            line-height: 1;
-            color: transparent;
-            vertical-align: -0.2em;
-        }
-        .toml-check.is-on {
-            border-color: var(--color-accent);
-            color: var(--color-accent);
-        }
-
-        /* A multi-line string is prose the author laid out, so it reads as a
-           filled-in note rather than another one-line answer. */
         .toml-prose {
             white-space: pre-wrap;
             margin: 0;
             font-family: var(--font-body);
             line-height: var(--line-height);
-            background: color-mix(in srgb, var(--color-text-muted) 6%, transparent);
+        }
+        .toml-bool {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            padding: 0.05rem 0.45rem;
             border-radius: var(--radius);
-            padding: 0.85rem 1rem;
+            background: color-mix(in srgb, var(--color-text-muted) 15%, transparent);
+        }
+        .toml-bool.is-true {
+            background: color-mix(in srgb, var(--color-success) 20%, transparent);
         }
         .toml-list {
             margin: 0;
@@ -656,21 +560,12 @@
             .toolbar { padding: 0.5rem 0.75rem; }
             .col-date { display: none; }
             .md-view { padding: 1.5rem 1rem; }
-            .toml-view { padding: 1.25rem 0.75rem 3rem; }
-            .toml-group-head { padding: 0.6rem 1rem; }
-            .toml-group-body { padding: 1rem; }
-            .toml-group-body > .toml-table-wrap:only-child {
-                margin: -1rem;
-                width: calc(100% + 2rem);
-            }
-            .toml-group-body > .toml-table-wrap:only-child th:first-child,
-            .toml-group-body > .toml-table-wrap:only-child td:first-child { padding-left: 1rem; }
-            .toml-group-body > .toml-table-wrap:only-child th:last-child,
-            .toml-group-body > .toml-table-wrap:only-child td:last-child { padding-right: 1rem; }
-            /* Below the label column's minimum there is no room for two
-               columns, so the field row stacks label over value. */
-            .toml-fields { grid-template-columns: minmax(0, 1fr); gap: 0.2rem 0; }
-            .toml-fields dd { margin: 0 0 0.9rem; }
+            .toml-view { padding: 1.5rem 1rem; }
+            /* Below the key column's minimum there is no room for two
+               columns, so the field grid stacks key over value. */
+            .toml-fields { grid-template-columns: minmax(0, 1fr); gap: 0.1rem 0; }
+            .toml-fields dd { margin: 0 0 0.75rem; }
+            .toml-section .toml-section { margin-left: 0.5rem; padding-left: 0.5rem; }
             .ical-wrap { padding: 1rem 0.75rem; }
         }
     </style>
@@ -1380,14 +1275,14 @@
         const content = document.getElementById('content');
         content.innerHTML = '';
         content.className = 'toml-view';
-        renderTomlTable(root, content, 0);
+        renderTomlTable(root, content, 2);
         addTomlFilter(toolbar, content);
     }
 
-    // Render one table: its own scalar keys first, then a panel per
+    // Render one table: its own scalar keys first, then a section per
     // sub-table. Key order is document order — TOML tables are ordered by
     // where the author wrote them, and an author's order is information.
-    function renderTomlTable(table, container, depth) {
+    function renderTomlTable(table, container, level) {
         const fields = [];
         const blocks = [];
         table.value.forEach(function (v, k) {
@@ -1396,70 +1291,33 @@
             else fields.push([k, v]);
         });
 
-        if (fields.length) {
-            // The document's own loose keys get a panel with no header, the
-            // way the header block of a form sits above its first section.
-            if (depth === 0) {
-                const panel = el('section', 'toml-group');
-                const body = el('div', 'toml-group-body');
-                body.appendChild(tomlFields(fields));
-                panel.appendChild(body);
-                container.appendChild(panel);
-            } else {
-                container.appendChild(tomlFields(fields));
-            }
-        }
+        if (fields.length) container.appendChild(tomlFields(fields));
 
         blocks.forEach(function (pair) {
-            const group = tomlGroup(pair[0], depth);
-            if (pair[1].type === 'table') renderTomlTable(pair[1], group.body, depth + 1);
-            else renderTomlEntries(pair[0], pair[1].value, group.body, depth + 1);
-            container.appendChild(group.section);
+            const section = el('section', 'toml-section');
+            section.appendChild(tomlHeading(pair[0], level));
+            const next = Math.min(level + 1, 6);
+            if (pair[1].type === 'table') renderTomlTable(pair[1], section, next);
+            else renderTomlEntries(pair[0], pair[1].value, section, next);
+            container.appendChild(section);
         });
     }
 
     function isTomlTable(node) { return node.type === 'table'; }
 
-    // A top-level table is a panel of its own; anything nested inside one is
-    // a block within that panel rather than another panel, so a deep
-    // document reads as an outline instead of cards inside cards.
-    function tomlGroup(key, depth) {
-        const card = depth === 0;
-        const section = el('section', card ? 'toml-group' : 'toml-subgroup');
-        const head = el('div', card ? 'toml-group-head' : 'toml-subgroup-head');
-        const h = el('h' + Math.min(depth + 2, 6));
-        h.textContent = tomlLabelText(key);
-        h.title = key;
-        head.appendChild(h);
-        section.appendChild(head);
-        const body = el('div', card ? 'toml-group-body' : 'toml-subgroup-body');
-        section.appendChild(body);
-        return { section: section, body: body };
-    }
-
-    // Underscores separate words in a key, so they read as spaces. Hyphens
-    // are left alone: they turn up inside identifiers (GB-0417-BWM) as often
-    // as between words, and mangling one would be worse than a slightly
-    // stiff label. The exact key stays on the title either way.
-    function tomlLabelText(key) {
-        return key.replace(/_+/g, ' ');
+    function tomlHeading(text, level) {
+        const h = el('h' + level);
+        h.textContent = text;
+        return h;
     }
 
     function tomlFields(pairs) {
         const dl = el('dl', 'toml-fields');
         pairs.forEach(function (pair) {
-            const key = pair[0], node = pair[1];
             const dt = el('dt');
-            dt.textContent = tomlLabelText(key);
-            dt.title = key;
+            dt.textContent = pair[0];
             const dd = el('dd');
-            // A value that draws its own panel — a block of prose, a nested
-            // grid — supplies its own edge, so the row's rule would double it.
-            if (node.type === 'table' ||
-                (node.type === 'string' && node.value.indexOf('\n') >= 0)) {
-                dd.className = 'is-block';
-            }
-            dd.appendChild(tomlValue(node));
+            dd.appendChild(tomlValue(pair[1]));
             dl.appendChild(dt);
             dl.appendChild(dd);
         });
@@ -1470,15 +1328,16 @@
     // list — it is the repeated-record case, which is exactly what a table
     // is for. When the entries are too deep to line up, they fall back to a
     // section each rather than a table with unreadable cells.
-    function renderTomlEntries(key, entries, container, depth) {
+    function renderTomlEntries(key, entries, container, level) {
         if (tomlIsColumnar(entries)) {
             container.appendChild(tomlEntriesTable(entries));
             return;
         }
         entries.forEach(function (entry, i) {
-            const group = tomlGroup(key + ' ' + (i + 1), depth);
-            renderTomlTable(entry, group.body, depth + 1);
-            container.appendChild(group.section);
+            const section = el('section', 'toml-section');
+            section.appendChild(tomlHeading(key + ' ' + (i + 1), level));
+            renderTomlTable(entry, section, Math.min(level + 1, 6));
+            container.appendChild(section);
         });
     }
 
@@ -1513,8 +1372,7 @@
         const headRow = el('tr');
         columns.forEach(function (c) {
             const th = el('th');
-            th.textContent = tomlLabelText(c);
-            th.title = c;
+            th.textContent = c;
             headRow.appendChild(th);
         });
         const thead = el('thead');
@@ -1548,7 +1406,7 @@
             case 'string':  return tomlStringValue(node.value);
             case 'integer':
             case 'float':   return tomlSpan('toml-num', node.raw);
-            case 'boolean': return tomlCheck(node.value);
+            case 'boolean': return tomlSpan('toml-bool' + (node.value ? ' is-true' : ''), node.raw);
             case 'array':   return tomlArrayValue(node);
             case 'table':   return tomlInlineTableValue(node);
             default:        return tomlDateValue(node);
@@ -1562,19 +1420,6 @@
     }
 
     function tomlMuted(text) { return tomlSpan('toml-empty', text); }
-
-    // A boolean is a ticked or an empty box, the way it appears on a form
-    // that has been filled in. The literal stays on the title, and the box
-    // carries an accessible name so it is not a bare glyph to a screen
-    // reader. It is drawn, not an <input>: there is nothing here to toggle.
-    function tomlCheck(on) {
-        const box = el('span', 'toml-check' + (on ? ' is-on' : ''));
-        box.textContent = '✓';
-        box.title = on ? 'true' : 'false';
-        box.setAttribute('role', 'img');
-        box.setAttribute('aria-label', on ? 'true' : 'false');
-        return box;
-    }
 
     // The constants these use are declared above the dispatch, not here,
     // because the baked path renders synchronously — see the note there.
@@ -1722,16 +1567,12 @@
             if (shown) any = true;
         });
 
-        // A panel's contents live in its body, so the walk recurses into
-        // that rather than into the panel itself — otherwise the header
-        // band would count as content and every panel would always match.
-        scope.querySelectorAll(':scope > .toml-group, :scope > .toml-subgroup').forEach(function (group) {
-            const heading = group.querySelector(':scope > .toml-group-head > *, :scope > .toml-subgroup-head > *');
+        scope.querySelectorAll(':scope > .toml-section').forEach(function (section) {
+            const heading = section.querySelector(':scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6');
             const headingHit = !!q && !!heading && heading.textContent.toLowerCase().indexOf(q) >= 0;
-            const body = group.querySelector(':scope > .toml-group-body, :scope > .toml-subgroup-body');
-            const inner = body ? filterTomlScope(body, q, force || headingHit) : false;
+            const inner = filterTomlScope(section, q, force || headingHit);
             const visible = !q || force || headingHit || inner;
-            group.style.display = visible ? '' : 'none';
+            section.style.display = visible ? '' : 'none';
             if (visible) any = true;
         });
 
