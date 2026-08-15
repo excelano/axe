@@ -8,8 +8,9 @@
 # The working copy is always stamped with a plain release version (no -dev
 # suffix); see the Versioning section in README.md.
 #
-# Touches the 6 stamps: axe.css (header + --axe-version), calendar.css (header),
-# calendar.js (header + Calendar.version), and kitchen-sink.html (footer). It
+# Touches the 8 stamps: axe.css (header + --axe-version), calendar.css (header),
+# calendar.js (header + Calendar.version), toml.js (header + TOML.version), and
+# kitchen-sink.html (footer). It
 # does NOT edit the README changelog — those notes are prose, so add a
 # "### <version> (date)" entry by hand, then commit and tag.
 #
@@ -41,10 +42,13 @@ sed -i -E "s/AXE CALENDAR v$V/AXE CALENDAR v$NEW/"                 calendar.css
 # calendar.js — banner comment and the runtime Calendar.version.
 sed -i -E "s/AXE CALENDAR v$V/AXE CALENDAR v$NEW/"                 calendar.js
 sed -i -E "s/(Calendar\.version = ')$V(')/\1$NEW\2/"              calendar.js
+# toml.js — banner comment and the runtime TOML.version.
+sed -i -E "s/AXE TOML v$V/AXE TOML v$NEW/"                         toml.js
+sed -i -E "s/(version: ')$V(')/\1$NEW\2/"                          toml.js
 # kitchen-sink.html — footer version line.
 sed -i -E "s/Axe v$V/Axe v$NEW/"                                  kitchen-sink.html
 
 echo "axe version set to $NEW:"
-grep -nE "AXE( CALENDAR)? v[0-9]|Axe v[0-9]|--axe-version:|Calendar\.version = '" axe.css calendar.css calendar.js kitchen-sink.html
+grep -nE "AXE( CALENDAR| TOML)? v[0-9]|Axe v[0-9]|--axe-version:|Calendar\.version = '|version: '" axe.css calendar.css calendar.js toml.js kitchen-sink.html
 echo
 echo "Next: add a '### $NEW ($(date +%Y-%m-%d))' note to README.md, then commit + tag."

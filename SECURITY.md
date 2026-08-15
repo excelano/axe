@@ -14,12 +14,14 @@ Axe is vendored into each consuming site rather than installed from a package re
 
 The CSS framework itself (`axe.css`, `calendar.css`, `default.css`, `theme.js`) is static styling with no attack surface. The security model is entirely about the **viewer** (`view/`) and the **calendar component** (`calendar.js`), because their whole job is to turn a document into live HTML in your site's origin.
 
-Treat every document the viewer renders as if it were executable code. A `.md`, `.csv`, or `.ics` file is markup, and markup that reaches the DOM can carry script. Axe defends against this in two places, but the defenses are mitigation, not a license to render anything from anywhere:
+Treat every document the viewer renders as if it were executable code. A `.md`, `.csv`, `.ics`, or `.toml` file is markup, and markup that reaches the DOM can carry script. Axe defends against this in two places, but the defenses are mitigation, not a license to render anything from anywhere:
 
 - **Markdown** is run through DOMPurify (`dependencies/purify.min.js`) before insertion, which strips `<script>`, `onerror`/`onload` and other event-handler attributes, and `javascript:` URLs. Do not remove this step or render Markdown with `marked.parse()` directly — `marked` does not sanitize. This holds for the slide-deck rendering too (`?view=slides`): each slide is one chunk of the same Markdown run through the same DOMPurify step, so presenting a `.md` carries no attack surface the document rendering does not.
 - **Calendar event URLs** (the `URL:` property of an `.ics` event) are passed through a scheme allowlist before becoming a link `href`. Only `http:`, `https:`, and `mailto:` survive; a `javascript:` URL is dropped and the event renders as plain text.
 
-CSV and TSV cells are HTML-escaped on the way into the table, so a spreadsheet cannot inject markup.
+- **TOML links** go through the same kind of scheme allowlist. A string becomes a link only when it is an `http:`/`https:`/`mailto:` URL, a bare email address, or a relative path ending in a document extension; any other scheme — `javascript:`, `data:` — is rejected outright rather than filtered, and the string renders as text. Relative paths resolve against the document's own URL, so a rendered file can only point within reach of where it already lives.
+
+CSV and TSV cells are HTML-escaped on the way into the table, so a spreadsheet cannot inject markup. TOML needs no sanitizer for a different reason: `toml.js` yields data rather than markup, and the renderer builds every node with `textContent`, so a document never contributes HTML in the first place. It is the one format here whose rendering path cannot produce markup from the document at all.
 
 ## What the viewer fetches
 

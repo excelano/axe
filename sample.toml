@@ -1,0 +1,143 @@
+# Demo TOML document, and the viewer's TOML fixture.
+#
+# This is a records inventory: a description of a set of documents, the
+# provenance behind it, and a row per record. It is written in TOML for
+# the reason people reach for TOML — more structure than prose, less
+# ceremony than XML, still readable in a text editor — and it is meant
+# to be read rather than executed, which is what earns it a renderer.
+#
+# It also exercises the shapes the renderer has to handle: scalars,
+# nested tables, table arrays both flat and deep, inline tables, arrays,
+# multi-line strings, every number base, and all four date/time types.
+
+title = "Bellwether Mills records inventory"
+reference = "GB-0417-BWM"
+extent = "3 linear metres, 14 boxes"
+compiled = 2024-11-08
+revised = 2025-03-14T09:15:00-05:00
+complete = false
+records = 6
+
+description = """
+Business records of Bellwether Mills Ltd, a textile manufacturer
+operating in the Merrimack valley between 1889 and 1974.
+
+The inventory covers the surviving corporate records only. Personnel
+files were destroyed under the company's own retention schedule in
+1969 and are noted here as absent rather than missing."""
+
+[repository]
+name = "Merrimack Valley Industrial Archive"
+contact = "reference@example.org"
+reading_room = true
+appointment_required = true
+
+[repository.address]
+street = "48 Canal Street"
+city = "Lawrence"
+region = "Massachusetts"
+postal_code = "01840"
+
+[provenance]
+custodian = "Bellwether Mills Ltd (in liquidation)"
+acquired = 1976-04-02
+method = "Deposit"
+# A deposit agreement is a document in its own right; point at it rather
+# than paraphrase it.
+agreement = "sample.md"
+
+[provenance.chain]
+# Inline tables keep a short record on one line, which is what they are for.
+transfer_1 = { from = "Bellwether Mills Ltd", to = "Lawrence Public Library", year = 1976 }
+transfer_2 = { from = "Lawrence Public Library", to = "Merrimack Valley Industrial Archive", year = 1998 }
+
+[rights]
+copyright = "Expired for records created before 1929"
+access = "Open"
+restrictions = []
+citation = "MVIA, Bellwether Mills Ltd records, GB-0417-BWM"
+
+# A table array of flat entries is the repeated-record case, so it renders
+# as an actual table — the shape that stops a reader skipping it.
+[[record]]
+id = "BWM/1/1"
+title = "Directors' minute book"
+dates = "1889-1917"
+box = 1
+format = "Bound volume"
+digitised = true
+
+[[record]]
+id = "BWM/1/2"
+title = "Directors' minute book"
+dates = "1918-1946"
+box = 1
+format = "Bound volume"
+digitised = true
+
+[[record]]
+id = "BWM/2/1"
+title = "Wage books"
+dates = "1901-1938"
+box = 3
+format = "Bound volume"
+digitised = false
+
+[[record]]
+id = "BWM/3/1"
+title = "Plant photographs"
+dates = "1912-1961"
+box = 9
+format = "Silver gelatin prints"
+digitised = true
+
+[[record]]
+id = "BWM/4/1"
+title = "Loom specifications"
+dates = "1924"
+box = 11
+format = "Blueprints"
+digitised = false
+
+[[record]]
+id = "BWM/5/1"
+title = "Liquidation correspondence"
+dates = "1972-1976"
+box = 14
+format = "Loose papers"
+digitised = false
+
+# Entries too deep to line up in columns fall back to a section each,
+# rather than a table with unreadable cells.
+[[note]]
+subject = "Absent series"
+author = "K. Ferreira"
+written = 2024-11-08
+text = """
+Personnel files (would have been BWM/6) were destroyed in 1969 under the
+company's retention schedule. The schedule itself survives at BWM/1/2 and
+records the destruction, so the absence is documented rather than
+unexplained."""
+
+[[note]]
+subject = "Dating of the plant photographs"
+author = "K. Ferreira"
+written = 2025-03-14
+text = """
+Only four of the plant photographs carry a date. The range given here is
+inferred from the buildings visible in them: the north weaving shed was
+built in 1912 and the water tower was removed in 1961."""
+
+[technical]
+# Every integer base TOML defines, and a float that has to keep its
+# trailing zero to mean what it says.
+survey_hours = 41
+boxes_scanned = 0b1011
+shelf_code = 0o755
+checksum = 0xDEADBEEF
+metres_per_box = 0.214
+insured_value = 48500.00
+last_audit = 2025-06-30T14:00:00Z
+audit_window = 09:00:00
+next_review = 2026-01-15T08:30:00
+tags = ["textiles", "industry", "labour", "New England"]

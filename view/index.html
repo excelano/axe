@@ -22,6 +22,7 @@
     <script src="../dependencies/marked.min.js"></script>
     <script src="../dependencies/purify.min.js"></script>
     <script src="../calendar.js"></script>
+    <script src="../toml.js"></script>
     <script src="../theme.js"></script>
     <style>
         body {
@@ -281,6 +282,132 @@
             padding: 2.5rem 1.5rem;
         }
 
+        /* --- TOML view ---
+           A TOML document is a tree of tables, so the render is a tree of
+           sections: scalars in a field grid, a table array as an actual
+           table. Wider than .md-view because those tables carry columns,
+           narrow enough that prose in them stays readable. Like every other
+           component here it carries no color of its own — the contract
+           variables do the work. */
+        .toml-view {
+            width: 100%;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+        }
+
+        /* Key on the left, value on the right, both baselines aligned. The
+           key column sizes to the longest key (capped) instead of a fixed
+           width, so short-keyed documents don't render a canyon. */
+        .toml-fields {
+            display: grid;
+            grid-template-columns: minmax(6rem, max-content) minmax(0, 1fr);
+            gap: 0.45rem 1.75rem;
+            margin: 0 0 1.75rem;
+        }
+        .toml-fields dt {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            word-break: break-word;
+        }
+        .toml-fields dd {
+            margin: 0;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+        /* An inline table nests one grid inside another; drop the outer
+           bottom margin so it doesn't stack a gap inside a row. */
+        .toml-fields .toml-fields {
+            margin: 0;
+            gap: 0.2rem 1rem;
+        }
+
+        .toml-section { margin: 0 0 2rem; }
+        .toml-section > h2,
+        .toml-section > h3,
+        .toml-section > h4,
+        .toml-section > h5,
+        .toml-section > h6 {
+            margin: 0 0 0.75rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        /* Nested sections indent so the tree is legible without drawing
+           lines for it. */
+        .toml-section .toml-section {
+            margin-left: 1rem;
+            padding-left: 1rem;
+            border-left: 2px solid var(--color-border);
+        }
+
+        /* A table array is the one shape that reads better as a grid than
+           as a list, so it gets a real table — and its own scroll container,
+           since the page body must never scroll sideways. */
+        .toml-table-wrap {
+            overflow-x: auto;
+            margin: 0 0 1.5rem;
+        }
+        .toml-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .toml-table th {
+            text-align: left;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            padding: 0.5rem 0.9rem 0.5rem 0;
+            border-bottom: 2px solid var(--color-border);
+            white-space: nowrap;
+        }
+        .toml-table td {
+            padding: 0.55rem 0.9rem 0.55rem 0;
+            border-bottom: 1px solid var(--color-border);
+            vertical-align: top;
+        }
+        .toml-table tbody tr:hover { background: var(--color-surface); }
+
+        /* Value types. Numbers and dates line up in a column, so they take
+           the mono face and tabular figures; a multi-line string is prose
+           and keeps its line breaks. */
+        .toml-num,
+        .toml-date {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+        }
+        /* The literal the document was written with is on the title, so the
+           formatted date is marked as having more behind it — faintly, since
+           every date in the file carries it. */
+        .toml-date {
+            border-bottom: 1px dotted color-mix(in srgb, var(--color-text-muted) 45%, transparent);
+            cursor: help;
+        }
+        .toml-prose {
+            white-space: pre-wrap;
+            margin: 0;
+            font-family: var(--font-body);
+            line-height: var(--line-height);
+        }
+        .toml-bool {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            padding: 0.05rem 0.45rem;
+            border-radius: var(--radius);
+            background: color-mix(in srgb, var(--color-text-muted) 15%, transparent);
+        }
+        .toml-bool.is-true {
+            background: color-mix(in srgb, var(--color-success) 20%, transparent);
+        }
+        .toml-list {
+            margin: 0;
+            padding-left: 1.1rem;
+        }
+        .toml-empty { color: var(--color-text-muted); }
+
         /* --- Slides view: native one-at-a-time presenter ---
            The stage is the largest 16:9 box that fits the viewport, and its
            type scales with `cqw` (container-query width) units, so the deck
@@ -433,6 +560,12 @@
             .toolbar { padding: 0.5rem 0.75rem; }
             .col-date { display: none; }
             .md-view { padding: 1.5rem 1rem; }
+            .toml-view { padding: 1.5rem 1rem; }
+            /* Below the key column's minimum there is no room for two
+               columns, so the field grid stacks key over value. */
+            .toml-fields { grid-template-columns: minmax(0, 1fr); gap: 0.1rem 0; }
+            .toml-fields dd { margin: 0 0 0.75rem; }
+            .toml-section .toml-section { margin-left: 0.5rem; padding-left: 0.5rem; }
             .ical-wrap { padding: 1rem 0.75rem; }
         }
     </style>
@@ -486,13 +619,28 @@
     let name = '';
     let fetchUrl = '';
 
+    // Constants the TOML renderer reads. They live up here, above the
+    // dispatch, rather than beside the renderer that uses them: the baked
+    // branch below calls a renderer synchronously, part-way down this
+    // script, so anything declared after it is still in the temporal dead
+    // zone when it runs. The fetch path never noticed — its .then() defers
+    // past the whole script — which is exactly why the baked path is the
+    // one to check when adding a renderer.
+    const TOML_LINK_SCHEME = /^(?:https?:\/\/|mailto:)/i;
+    const TOML_ANY_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
+    const TOML_EMAIL = /^[^\s@<>()[\],;:"]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
+    const TOML_DOC_EXT = /\.(?:pdf|md|markdown|csv|tsv|ics|ical|txt|html?|docx?|xlsx?|pptx?|odt|ods|rtf|png|jpe?g|gif|webp|svg|tiff?|zip|json|toml|ya?ml|xml)$/i;
+    const TOML_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+
     const renderers = {
         csv: renderCsv,
         tsv: renderCsv,
         md: renderMarkdownEntry,
         markdown: renderMarkdownEntry,
         ics: renderIcal,
-        ical: renderIcal
+        ical: renderIcal,
+        toml: renderToml
     };
 
     // Baked, server-free mode: `cleave` inlines the document into a hidden
@@ -554,7 +702,7 @@
     } else {
         // No extension, local: nothing to render. Directory browsing lives in
         // the separate `browse` tool now, not the viewer.
-        showMessage('The viewer renders a single document. Point it at a <code>.csv</code>, <code>.md</code>, or <code>.ics</code> file.');
+        showMessage('The viewer renders a single document. Point it at a <code>.csv</code>, <code>.md</code>, <code>.ics</code>, or <code>.toml</code> file.');
     }
 
 
@@ -1097,6 +1245,338 @@
                 document.title = cal.meta.calname + ' - View';
             }
         });
+    }
+
+
+    // ==========================================================
+    // TOML Renderer
+    // ==========================================================
+
+    // A TOML file carries no schema, so nothing here knows what any key
+    // means: the render is driven entirely by the shape the format itself
+    // defines. Scalars become a field grid, sub-tables become nested
+    // sections, and a table array becomes an actual table when its entries
+    // line up in columns. Everything is read off the typed tree toml.js
+    // returns, so a number is displayed as it was written — 1500.00 stays
+    // 1500.00, and 0xDEAD stays hexadecimal.
+    function renderToml(text) {
+        let root;
+        try {
+            root = TOML.parse(text, { typed: true });
+        } catch (e) {
+            showMessage('Could not parse <code>' + escHtml(name) + '</code>.<br>' + escHtml(e.message));
+            return;
+        }
+
+        const toolbar = document.getElementById('toolbar');
+        toolbar.style.display = 'flex';
+        document.getElementById('title').textContent = name;
+
+        const content = document.getElementById('content');
+        content.innerHTML = '';
+        content.className = 'toml-view';
+        renderTomlTable(root, content, 2);
+        addTomlFilter(toolbar, content);
+    }
+
+    // Render one table: its own scalar keys first, then a section per
+    // sub-table. Key order is document order — TOML tables are ordered by
+    // where the author wrote them, and an author's order is information.
+    function renderTomlTable(table, container, level) {
+        const fields = [];
+        const blocks = [];
+        table.value.forEach(function (v, k) {
+            if (v.type === 'table' && !v.inline) blocks.push([k, v]);
+            else if (v.type === 'array' && v.value.length && v.value.every(isTomlTable)) blocks.push([k, v]);
+            else fields.push([k, v]);
+        });
+
+        if (fields.length) container.appendChild(tomlFields(fields));
+
+        blocks.forEach(function (pair) {
+            const section = el('section', 'toml-section');
+            section.appendChild(tomlHeading(pair[0], level));
+            const next = Math.min(level + 1, 6);
+            if (pair[1].type === 'table') renderTomlTable(pair[1], section, next);
+            else renderTomlEntries(pair[0], pair[1].value, section, next);
+            container.appendChild(section);
+        });
+    }
+
+    function isTomlTable(node) { return node.type === 'table'; }
+
+    function tomlHeading(text, level) {
+        const h = el('h' + level);
+        h.textContent = text;
+        return h;
+    }
+
+    function tomlFields(pairs) {
+        const dl = el('dl', 'toml-fields');
+        pairs.forEach(function (pair) {
+            const dt = el('dt');
+            dt.textContent = pair[0];
+            const dd = el('dd');
+            dd.appendChild(tomlValue(pair[1]));
+            dl.appendChild(dt);
+            dl.appendChild(dd);
+        });
+        return dl;
+    }
+
+    // A table array is the one shape that reads better as a grid than as a
+    // list — it is the repeated-record case, which is exactly what a table
+    // is for. When the entries are too deep to line up, they fall back to a
+    // section each rather than a table with unreadable cells.
+    function renderTomlEntries(key, entries, container, level) {
+        if (tomlIsColumnar(entries)) {
+            container.appendChild(tomlEntriesTable(entries));
+            return;
+        }
+        entries.forEach(function (entry, i) {
+            const section = el('section', 'toml-section');
+            section.appendChild(tomlHeading(key + ' ' + (i + 1), level));
+            renderTomlTable(entry, section, Math.min(level + 1, 6));
+            container.appendChild(section);
+        });
+    }
+
+    // Columns only work when the entries actually line up: more than one of
+    // them, every value flat, and few enough keys to read across a row.
+    function tomlIsColumnar(entries) {
+        if (entries.length < 2) return false;
+        const seen = {};
+        let columns = 0;
+        for (let i = 0; i < entries.length; i++) {
+            let flat = true;
+            entries[i].value.forEach(function (v, k) {
+                if (!Object.prototype.hasOwnProperty.call(seen, k)) { seen[k] = true; columns++; }
+                if (v.type === 'table' && !v.inline) flat = false;
+                else if (v.type === 'array' && v.value.some(isTomlTable)) flat = false;
+                else if (v.type === 'string' && v.value.indexOf('\n') >= 0) flat = false;
+            });
+            if (!flat) return false;
+        }
+        return columns > 0 && columns <= 12;
+    }
+
+    function tomlEntriesTable(entries) {
+        const columns = [];
+        entries.forEach(function (entry) {
+            entry.value.forEach(function (v, k) {
+                if (columns.indexOf(k) < 0) columns.push(k);
+            });
+        });
+
+        const table = el('table', 'toml-table');
+        const headRow = el('tr');
+        columns.forEach(function (c) {
+            const th = el('th');
+            th.textContent = c;
+            headRow.appendChild(th);
+        });
+        const thead = el('thead');
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+
+        const tbody = el('tbody');
+        entries.forEach(function (entry) {
+            const tr = el('tr');
+            columns.forEach(function (c) {
+                const td = el('td');
+                const v = entry.value.get(c);
+                // A key absent from this entry is not the same as a key set
+                // to an empty value, so it reads as a gap, not a blank.
+                td.appendChild(v === undefined ? tomlMuted('—') : tomlValue(v));
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        const wrap = el('div', 'toml-table-wrap');
+        wrap.appendChild(table);
+        return wrap;
+    }
+
+    // --- values ---
+
+    function tomlValue(node) {
+        switch (node.type) {
+            case 'string':  return tomlStringValue(node.value);
+            case 'integer':
+            case 'float':   return tomlSpan('toml-num', node.raw);
+            case 'boolean': return tomlSpan('toml-bool' + (node.value ? ' is-true' : ''), node.raw);
+            case 'array':   return tomlArrayValue(node);
+            case 'table':   return tomlInlineTableValue(node);
+            default:        return tomlDateValue(node);
+        }
+    }
+
+    function tomlSpan(cls, text) {
+        const s = el('span', cls);
+        s.textContent = text;
+        return s;
+    }
+
+    function tomlMuted(text) { return tomlSpan('toml-empty', text); }
+
+    // The constants these use are declared above the dispatch, not here,
+    // because the baked path renders synchronously — see the note there.
+
+    // A string earns a link when it is one: an http(s)/mailto URL, or a
+    // relative path to something a browser can open. The scheme test is a
+    // whitelist, not a javascript:/data: blacklist, because a document is
+    // untrusted input. Resolution is relative to the document rather than
+    // to the viewer, so a file that lists the records it describes becomes
+    // navigable — most of the difference between a metadata dump and a
+    // finding aid.
+    function tomlLinkTarget(s) {
+        if (TOML_LINK_SCHEME.test(s)) return s;
+        if (TOML_ANY_SCHEME.test(s)) return null;
+        // A contact address is written as an address, not as a mailto: URL.
+        if (TOML_EMAIL.test(s)) return 'mailto:' + s;
+        if (/[\s?#]/.test(s) || !TOML_DOC_EXT.test(s)) return null;
+        try {
+            return new URL(s, fetchUrl ? new URL(fetchUrl, location.href) : location.href).href;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function tomlStringValue(s) {
+        if (s === '') return tomlMuted('""');
+        if (s.indexOf('\n') >= 0) {
+            // A multi-line string is prose the author laid out; keep the
+            // line breaks they wrote.
+            const p = el('div', 'toml-prose');
+            p.textContent = s;
+            return p;
+        }
+        const href = tomlLinkTarget(s);
+        if (!href) return tomlSpan('', s);
+        const a = el('a');
+        a.href = href;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = s;
+        return a;
+    }
+
+    function tomlArrayValue(node) {
+        const items = node.value;
+        if (!items.length) return tomlMuted('—');
+        const flat = items.every(function (v) {
+            return v.type !== 'table' && v.type !== 'array' &&
+                   !(v.type === 'string' && v.value.indexOf('\n') >= 0);
+        });
+        if (flat && items.length <= 4) {
+            const span = el('span');
+            items.forEach(function (v, i) {
+                if (i) span.appendChild(document.createTextNode(', '));
+                span.appendChild(tomlValue(v));
+            });
+            return span;
+        }
+        const ul = el('ul', 'toml-list');
+        items.forEach(function (v) {
+            const li = el('li');
+            li.appendChild(tomlValue(v));
+            ul.appendChild(li);
+        });
+        return ul;
+    }
+
+    function tomlInlineTableValue(node) {
+        const pairs = [];
+        node.value.forEach(function (v, k) { pairs.push([k, v]); });
+        return pairs.length ? tomlFields(pairs) : tomlMuted('—');
+    }
+
+    // Dates render in a form a reader parses at a glance, in a <time> so the
+    // machine-readable literal survives in the markup. The offset is shown
+    // as written and never converted to the reader's zone: a document states
+    // the time it states, and TOML's three local types deliberately carry no
+    // zone at all to convert from.
+    function tomlDateValue(node) {
+        const t = el('time', 'toml-date');
+        t.setAttribute('datetime', node.raw);
+        t.title = node.raw;
+        t.textContent = tomlHumanTemporal(node);
+        return t;
+    }
+
+    function tomlHumanTemporal(node) {
+        if (node.type === 'time-local') return node.raw;
+        const m = /^(\d{4})-(\d{2})-(\d{2})(?:[Tt ](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(.*))?$/.exec(node.raw);
+        if (!m) return node.raw;
+        const date = String(+m[3]) + ' ' + TOML_MONTHS[+m[2] - 1] + ' ' + m[1];
+        if (!m[4]) return date;
+        let time = m[4] + ':' + m[5];
+        if (m[6] !== '00') time += ':' + m[6];
+        const offset = (m[7] || '').trim();
+        const zone = /^[Zz]$/.test(offset) ? ' UTC' : (offset ? ' UTC' + offset : '');
+        return date + ' at ' + time + zone;
+    }
+
+    // --- filter ---
+
+    // A long metadata file is a lot of scrolling, and a finding aid is only
+    // as good as its lookup. Hiding what doesn't match beats highlighting
+    // what does, because the answer ends up on one screen. A section whose
+    // own heading matches keeps all of its contents, so filtering by a
+    // section's name shows that section whole.
+    function addTomlFilter(toolbar, content) {
+        const input = el('input', 'toml-filter');
+        input.type = 'search';
+        input.placeholder = 'Filter';
+        input.setAttribute('aria-label', 'Filter this document');
+        input.addEventListener('input', function () {
+            filterTomlScope(content, input.value.trim().toLowerCase(), false);
+        });
+        const toggle = toolbar.querySelector('.theme-toggle');
+        toolbar.insertBefore(el('span', 'separator'), toggle);
+        toolbar.insertBefore(input, toggle);
+    }
+
+    // Returns whether anything in this scope survived. `force` is set once
+    // an ancestor heading has matched, which keeps its whole subtree.
+    function filterTomlScope(scope, q, force) {
+        let any = force || !q;
+
+        scope.querySelectorAll(':scope > .toml-fields').forEach(function (dl) {
+            const kids = dl.children;
+            for (let i = 0; i + 1 < kids.length; i += 2) {
+                const dt = kids[i], dd = kids[i + 1];
+                const hit = !q || force ||
+                    (dt.textContent + ' ' + dd.textContent).toLowerCase().indexOf(q) >= 0;
+                dt.style.display = hit ? '' : 'none';
+                dd.style.display = hit ? '' : 'none';
+                if (hit) any = true;
+            }
+        });
+
+        scope.querySelectorAll(':scope > .toml-table-wrap').forEach(function (wrap) {
+            let shown = 0;
+            wrap.querySelectorAll('tbody > tr').forEach(function (tr) {
+                const hit = !q || force || tr.textContent.toLowerCase().indexOf(q) >= 0;
+                tr.style.display = hit ? '' : 'none';
+                if (hit) shown++;
+            });
+            wrap.style.display = shown ? '' : 'none';
+            if (shown) any = true;
+        });
+
+        scope.querySelectorAll(':scope > .toml-section').forEach(function (section) {
+            const heading = section.querySelector(':scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6');
+            const headingHit = !!q && !!heading && heading.textContent.toLowerCase().indexOf(q) >= 0;
+            const inner = filterTomlScope(section, q, force || headingHit);
+            const visible = !q || force || headingHit || inner;
+            section.style.display = visible ? '' : 'none';
+            if (visible) any = true;
+        });
+
+        return any;
     }
 
 

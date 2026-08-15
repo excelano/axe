@@ -1,14 +1,14 @@
 # Axe
 
-Axe renders documents on-brand. A semantic CSS base styles plain HTML, and a matching set of components renders the standardized text formats the browser won't — CSV, Markdown, and iCalendar. One variable contract drives all of it, so point Axe at any of them and it comes out looking like your site.
+Axe renders documents on-brand. A semantic CSS base styles plain HTML, and a matching set of components renders the standardized text formats the browser won't — CSV, Markdown, iCalendar, and TOML. One variable contract drives all of it, so point Axe at any of them and it comes out looking like your site.
 
 It doesn't sit in a familiar category, and it isn't trying to. It isn't a utility framework (Tailwind), a component library (Bootstrap), or a design system. It's a small framework plus a curated set of components, held together by one idea: every piece takes a document and renders it on-brand through the same variable contract. The CSS base does that for semantic HTML; the components do it for the document formats HTML leaves on the floor.
 
 ## What Axe Is
 
-The web runs on a document metaphor. A server sends a document and the requestor renders it; a browser, at its core, is a document viewer. But it's a selective one. It renders HTML, images, and PDF natively, and for nearly everything else it gives up and downloads the file. The axe viewer picks up a defined slice of what the browser abandons: standardized, text-based formats that carry visual structure worth rendering and have no native browser renderer. CSV, Markdown, iCalendar. It's the renderer the browser never shipped — point it at one of those files with `?url=`, and it renders it on-brand. (Browsing the directories that hold those files is a separate tool, [browse](https://github.com/anderix/browse), which hands each file back to this viewer to render.)
+The web runs on a document metaphor. A server sends a document and the requestor renders it; a browser, at its core, is a document viewer. But it's a selective one. It renders HTML, images, and PDF natively, and for nearly everything else it gives up and downloads the file. The axe viewer picks up a defined slice of what the browser abandons: standardized, text-based formats that carry visual structure worth rendering and have no native browser renderer. CSV, Markdown, iCalendar, TOML. It's the renderer the browser never shipped — point it at one of those files with `?url=`, and it renders it on-brand. (Browsing the directories that hold those files is a separate tool, [browse](https://github.com/anderix/browse), which hands each file back to this viewer to render.)
 
-That boundary is a door policy, not an accident. A format earns a place in the viewer when it is text, standardized, structurally renderable, and unrendered by browsers. JSON is already handled by browsers, so it stays out. YAML and TOML are configuration rather than documents, so they stay out. The set is curated on purpose — which is why this is the axe viewer, not a universal one.
+That boundary is a door policy, not an accident. A format earns a place in the viewer when it is text, standardized, structurally renderable, unrendered by browsers, and read as documents. That last test is about how files in a format are used, not what the format was designed for — CSV was invented to move data between programs, and it is here because people sit and read tables. JSON stays out: browsers already render it. YAML stays out on the *standardized* test rather than the document one, because it has competing versions and implicit type coercion, so two parsers can disagree about what the same file means — and a renderer that silently picks one reading is worse than no renderer at all. TOML is in. It has one specification, one unambiguous data model, and a structure — tables, arrays of tables — that is genuinely renderable; and while it was designed for configuration, a great deal of TOML is written to be read: inventories, manifests, metadata records describing a set of files. Those are documents by use, whatever the format's origin. The set is still curated on purpose — which is why this is the axe viewer, not a universal one.
 
 The components carry no look of their own, and that is deliberate. A standalone widget ships its own complete styling and imposes it on every host; an axe component ships almost none and wears the host's identity through the variable contract instead. That dependence is the reason the components live inside Axe rather than as separate libraries. They are built on the CSS base as a substrate, not decorated by it as a convenience — pull the base out from under the calendar and its toolbar buttons drop to bare browser defaults. The coupling isn't a packaging detail to engineer away; it is what the components are for. They are the proof that the contract is worth depending on.
 
@@ -48,6 +48,7 @@ cli/cleave.py report.md            # -> report.html (a document)
 cli/cleave.py deck.md --slides     # -> deck.html (a slide deck)
 cli/cleave.py data.csv             # -> data.html (an interactive table)
 cli/cleave.py team.ics             # -> team.html (a calendar)
+cli/cleave.py inventory.toml       # -> inventory.html (a structured document)
 cli/cleave.py report.md --brand mybrand.css   # inline a brand palette
 ```
 
@@ -73,10 +74,13 @@ default.css           Default brand baseline (a complete set of contract vars).
 theme.js              Theme detection and toggle. Include in <head>.
 calendar.js           iCalendar (.ics) engine: parser, day/week/month/list views, CSV/iCal export.
 calendar.css          Calendar styles. Uses the variable contract only.
+toml.js               TOML v1.0.0 engine: parser for the viewer's .toml renderer.
+                      Validated against the official toml-lang/toml-test suite.
 sample.csv            Demo CSV (also the CSV-view demo and fixture).
 sample.md             Demo Markdown document (also the document-view demo and fixture).
 sample.ics            Demo calendar feed (also the viewer demo and round-trip fixture).
 sample-slides.md      Demo slide deck (also the slides-view demo and fixture).
+sample.toml           Demo TOML document (also the TOML-view demo and fixture).
 kitchen-sink.html     Reference page showing all styled HTML elements.
 brand-builder.html    Generates brand.css from color, font, shape, and shadow inputs.
 README.md             This file.
@@ -84,10 +88,11 @@ dependencies/
   marked.min.js       Markdown parser for the viewer (MIT licensed).
   purify.min.js       DOMPurify — sanitizes rendered Markdown (Apache-2.0 / MPL-2.0).
 cli/                  The command-line side: not web assets, not served.
-  cleave.py           Bakes a CSV/Markdown/iCalendar file into one self-contained
+  cleave.py           Bakes a CSV/Markdown/iCalendar/TOML file into one self-contained
                       HTML file that renders from disk (file://) with no server.
 view/
-  index.html          Axe viewer: renders one CSV, Markdown, or iCalendar file. ?url=path/to/file
+  index.html          Axe viewer: renders one CSV, Markdown, iCalendar, or TOML file.
+                      ?url=path/to/file
                       Markdown renders as a document or, with ?view=slides (or mode: slides
                       frontmatter), as a native slide deck.
 ```
@@ -163,6 +168,46 @@ Event chips and bars are tinted by a per-event hue, computed deterministically f
 ### Remote feeds and CORS
 
 External `?url=` fetches are denied by default for security (see [SECURITY.md](SECURITY.md)); enable specific hosts via `EXTERNAL_ALLOWLIST` in `view/index.html`. Even once allowlisted, the viewer fetches in the browser, so a remote feed only loads if that origin sends `Access-Control-Allow-Origin` — most calendar feeds don't. A locked-down remote feed needs a same-origin proxy that re-serves it, and that proxy is also the right place to normalize any non-standard encoding before the calendar sees it. Local and same-origin files load directly and are unaffected by the allowlist.
+
+## TOML
+
+The axe viewer renders `.toml` the same way it renders CSV and Markdown. There is no schema and no configuration: the render is driven entirely by the shape the format itself defines, so nothing in the viewer knows what any key means.
+
+```
+view/index.html?url=path/to/inventory.toml
+```
+
+The mapping is the whole design:
+
+| In the document | On the page |
+| --- | --- |
+| Keys with scalar values | A field grid, key beside value |
+| A sub-table `[a.b]` | A nested section, heading and all |
+| A table array `[[record]]` | A real table, one row per entry |
+| A table array too deep to line up | A section per entry instead |
+| An inline table `{ ... }` | A nested field grid inside the value |
+| A multi-line string | Prose, with the author's line breaks kept |
+| The four date/time types | A readable date in a `<time>`, literal on hover |
+| A path or URL | A link, resolved relative to the document |
+
+Two of those rows carry most of the value. A table array is the repeated-record case, and rendering it as an actual table is what stops a reader skipping the file. Linking paths is what turns a metadata file into a finding aid: point a TOML document at the records it describes and the rendered page walks to them. Only `http(s)`, `mailto`, bare email addresses, and relative paths ending in a document extension become links — the scheme test is a whitelist, because a document is untrusted input.
+
+Numbers are shown as they were written. `48500.00` keeps its trailing zeros, `0xDEADBEEF` stays hexadecimal, and a 64-bit integer keeps every digit — the renderer reads the literal from the parser's typed tree rather than a JavaScript number that has already rounded it. Dates are never converted to the reader's timezone: a document states the time it states, and TOML's three local types deliberately carry no zone to convert from.
+
+A toolbar filter hides what doesn't match, which beats highlighting when the answer should end up on one screen. Filtering by a section's name keeps that section whole.
+
+`toml.js` is the engine behind it: a single classic script with no dependencies and no build step, the same relationship `calendar.js` has with iCalendar. It implements TOML v1.0.0 and is validated against the official [toml-test](https://github.com/toml-lang/toml-test) suite — 210 valid documents parsed correctly and 490 invalid ones rejected. The nine remaining cases in that suite are files whose *bytes* are not valid UTF-8; the decoder replaces those before any string reaches the parser, in the browser (`Response.text()`) exactly as in Node, so no string-taking parser can detect them.
+
+It embeds in any page on its own:
+
+```js
+const data = TOML.parse(text);                    // plain JS values
+const tree = TOML.parse(text, { typed: true });   // typed nodes, with the literals
+```
+
+Plain mode returns objects, arrays, strings, booleans, numbers, and `TOML.Date`. Integers beyond `Number.MAX_SAFE_INTEGER` come back as `BigInt` rather than quietly losing digits. Typed mode returns each value with its TOML type, its parsed value, and the literal it was written as — the shape the renderer needs, and the reason the page can show `48500.00`. Invalid input throws `TOML.SyntaxError` with a line and column.
+
+Like every other component here, the renderer ships almost no look of its own: it wears the host's identity through the variable contract.
 
 ## Dark Mode
 

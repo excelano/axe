@@ -2,7 +2,7 @@
 """cleave - Bake an Axe-rendered document into one self-contained HTML file.
 
 Usage:
-  cleave <input.{csv,tsv,md,markdown,ics,ical}> [output.html]
+  cleave <input.{csv,tsv,md,markdown,ics,ical,toml}> [output.html]
          [--slides | --view doc|slides] [--brand brand.css] [--name LABEL]
 
 Produces a single portable .html with the document and only the assets that
@@ -33,6 +33,7 @@ ASSETS = (
     "default.css",
     "calendar.css",
     "calendar.js",
+    "toml.js",
     "theme.js",
     "dependencies/marked.min.js",
     "dependencies/purify.min.js",
@@ -76,16 +77,21 @@ LINK_CALCSS = I + '<link rel="stylesheet" href="../calendar.css">'
 SRC_MARKED = I + '<script src="../dependencies/marked.min.js"></script>'
 SRC_PURIFY = I + '<script src="../dependencies/purify.min.js"></script>'
 SRC_CALJS = I + '<script src="../calendar.js"></script>'
+SRC_TOMLJS = I + '<script src="../toml.js"></script>'
 SRC_THEME = I + '<script src="../theme.js"></script>'
 
 # Which assets each format actually uses (mirrors the viewer's renderers).
 NEEDS = {
-    "csv":      {"marked": False, "purify": False, "calendar": False},
-    "tsv":      {"marked": False, "purify": False, "calendar": False},
-    "md":       {"marked": True,  "purify": True,  "calendar": False},
-    "markdown": {"marked": True,  "purify": True,  "calendar": False},
-    "ics":      {"marked": False, "purify": False, "calendar": True},
-    "ical":     {"marked": False, "purify": False, "calendar": True},
+    "csv":      {"marked": False, "purify": False, "calendar": False, "toml": False},
+    "tsv":      {"marked": False, "purify": False, "calendar": False, "toml": False},
+    "md":       {"marked": True,  "purify": True,  "calendar": False, "toml": False},
+    "markdown": {"marked": True,  "purify": True,  "calendar": False, "toml": False},
+    "ics":      {"marked": False, "purify": False, "calendar": True,  "toml": False},
+    "ical":     {"marked": False, "purify": False, "calendar": True,  "toml": False},
+    # TOML needs no sanitizer: the parser yields data, and the renderer
+    # builds nodes with textContent rather than markup, so a document
+    # never contributes HTML to inline away.
+    "toml":     {"marked": False, "purify": False, "calendar": False, "toml": True},
 }
 
 
@@ -116,7 +122,7 @@ def attr_escape(text):
 def main():
     ap = argparse.ArgumentParser(prog="cleave",
                                  description="Bake an Axe document into a self-contained HTML file.")
-    ap.add_argument("input", help="input .csv/.tsv/.md/.markdown/.ics/.ical")
+    ap.add_argument("input", help="input .csv/.tsv/.md/.markdown/.ics/.ical/.toml")
     ap.add_argument("output", nargs="?", help="output .html (default: input name with .html)")
     ap.add_argument("--view", choices=["auto", "doc", "slides"], default="auto",
                     help="Markdown render mode (default: auto -- frontmatter/default decides)")
@@ -130,7 +136,7 @@ def main():
         sys.exit(f"Error: file not found: {src}")
     ext = src.suffix.lstrip(".").lower()
     if ext not in NEEDS:
-        sys.exit(f"Error: unsupported type '.{ext}'. Use csv, tsv, md, markdown, ics, or ical.")
+        sys.exit(f"Error: unsupported type '.{ext}'. Use csv, tsv, md, markdown, ics, ical, or toml.")
     if not TEMPLATE.is_file():
         sys.exit(f"Error: viewer template not found at {TEMPLATE}\n"
                  f"cleave needs the Axe assets to inline. Install the cleave "
@@ -165,6 +171,7 @@ def main():
         SRC_MARKED:   script_block(read(AXE_ROOT / "dependencies" / "marked.min.js"), "marked.min.js") if needs["marked"] else "",
         SRC_PURIFY:   script_block(read(AXE_ROOT / "dependencies" / "purify.min.js"), "purify.min.js") if needs["purify"] else "",
         SRC_CALJS:    script_block(read(AXE_ROOT / "calendar.js"), "calendar.js") if needs["calendar"] else "",
+        SRC_TOMLJS:   script_block(read(AXE_ROOT / "toml.js"), "toml.js") if needs["toml"] else "",
         SRC_THEME:    script_block(read(AXE_ROOT / "theme.js"), "theme.js"),
     }
     for tag, replacement in repl.items():
