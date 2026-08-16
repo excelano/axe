@@ -3,10 +3,13 @@
 # set-version.sh — stamp a new axe version across every file that carries it.
 #
 # Usage:
-#   ./set-version.sh 0.4.1        # stamp a plain release version
+#   ./set-version.sh 1.7.8-dev    # stamp the working copy while developing
+#   ./set-version.sh 1.7.8        # stamp the release you are about to tag
 #
-# The working copy is always stamped with a plain release version (no -dev
-# suffix); see the Versioning section in README.md.
+# The working copy carries a -dev suffix. Consumers vendor their own copies of
+# the framework, so a site can be running a snapshot taken between two releases,
+# and the suffix is what tells you a published copy came from an untagged tree.
+# Stamp plain only when you tag. See the Versioning section in README.md.
 #
 # Touches the 8 stamps: axe.css (header + --axe-version), calendar.css (header),
 # calendar.js (header + Calendar.version), toml.js (header + TOML.version), and
@@ -19,12 +22,12 @@ cd "$(dirname "$0")"
 
 NEW="${1:-}"
 if [ -z "$NEW" ]; then
-    echo "usage: $0 <version>   e.g. $0 0.4.1" >&2
+    echo "usage: $0 <version>   e.g. $0 1.7.8-dev (working copy) or $0 1.7.8 (release)" >&2
     exit 1
 fi
 
-# Shape check: digits.digits.digits, with an optional pre-release suffix still
-# tolerated (e.g. -rc1) even though releases are stamped plain.
+# Shape check: digits.digits.digits, with an optional pre-release suffix — the
+# working copy normally carries one (-dev), and releases are stamped plain.
 if ! [[ "$NEW" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-z0-9.]+)?$ ]]; then
     echo "error: '$NEW' isn't a version (expected e.g. 0.4.1)" >&2
     exit 1
@@ -51,4 +54,7 @@ sed -i -E "s/Axe v$V/Axe v$NEW/"                                  kitchen-sink.h
 echo "axe version set to $NEW:"
 grep -nE "AXE( CALENDAR| TOML)? v[0-9]|Axe v[0-9]|--axe-version:|Calendar\.version = '|version: '" axe.css calendar.css calendar.js toml.js kitchen-sink.html
 echo
-echo "Next: add a '### $NEW ($(date +%Y-%m-%d))' note to README.md, then commit + tag."
+case "$NEW" in
+    *-*) echo "Working-copy stamp. Add the changelog entry and tag when you release." ;;
+    *)   echo "Next: add a '### $NEW ($(date +%Y-%m-%d))' note to README.md, then commit + tag." ;;
+esac
