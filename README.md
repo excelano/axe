@@ -1,14 +1,14 @@
 # Axe
 
-Axe renders documents on-brand. A semantic CSS base styles plain HTML, and a matching set of components renders the standardized text formats the browser won't — CSV, Markdown, iCalendar, and TOML. One variable contract drives all of it, so point Axe at any of them and it comes out looking like your site.
+Axe renders documents on-brand. A semantic CSS base styles plain HTML, and a matching set of components renders the standardized text formats the browser won't — CSV, Markdown, iCalendar, TOML, and DocLang. One variable contract drives all of it, so point Axe at any of them and it comes out looking like your site.
 
 It doesn't sit in a familiar category, and it isn't trying to. It isn't a utility framework (Tailwind), a component library (Bootstrap), or a design system. It's a small framework plus a curated set of components, held together by one idea: every piece takes a document and renders it on-brand through the same variable contract. The CSS base does that for semantic HTML; the components do it for the document formats HTML leaves on the floor.
 
 ## What Axe Is
 
-The web runs on a document metaphor. A server sends a document and the requestor renders it; a browser, at its core, is a document viewer. But it's a selective one. It renders HTML, images, and PDF natively, and for nearly everything else it gives up and downloads the file. The axe viewer picks up a defined slice of what the browser abandons: standardized, text-based formats that carry visual structure worth rendering and have no native browser renderer. CSV, Markdown, iCalendar, TOML. It's the renderer the browser never shipped — point it at one of those files with `?url=`, and it renders it on-brand. (Browsing the directories that hold those files is a separate tool, [browse](https://github.com/anderix/browse), which hands each file back to this viewer to render.)
+The web runs on a document metaphor. A server sends a document and the requestor renders it; a browser, at its core, is a document viewer. But it's a selective one. It renders HTML, images, and PDF natively, and for nearly everything else it gives up and downloads the file. The axe viewer picks up a defined slice of what the browser abandons: standardized, text-based formats that carry visual structure worth rendering and have no native browser renderer. CSV, Markdown, iCalendar, TOML, DocLang. It's the renderer the browser never shipped — point it at one of those files with `?url=`, and it renders it on-brand. (Browsing the directories that hold those files is a separate tool, [browse](https://github.com/anderix/browse), which hands each file back to this viewer to render.)
 
-That boundary is a door policy, not an accident. A format earns a place in the viewer when it is text, standardized, structurally renderable, unrendered by browsers, and read as documents. That last test is about how files in a format are used, not what the format was designed for — CSV was invented to move data between programs, and it is here because people sit and read tables. JSON stays out: browsers already render it. YAML stays out on the *standardized* test rather than the document one, because it has competing versions and implicit type coercion, so two parsers can disagree about what the same file means — and a renderer that silently picks one reading is worse than no renderer at all. TOML is in. It has one specification, one unambiguous data model, and a structure — tables, arrays of tables — that is genuinely renderable; and while it was designed for configuration, a great deal of TOML is written to be read: inventories, manifests, metadata records describing a set of files. Those are documents by use, whatever the format's origin. The set is still curated on purpose — which is why this is the axe viewer, not a universal one.
+That boundary is a door policy, not an accident. A format earns a place in the viewer when it is text, standardized, structurally renderable, unrendered by browsers, and read as documents. That last test is about how files in a format are used, not what the format was designed for — CSV was invented to move data between programs, and it is here because people sit and read tables. JSON stays out: browsers already render it. YAML stays out on the *standardized* test rather than the document one, because it has competing versions and implicit type coercion, so two parsers can disagree about what the same file means — and a renderer that silently picks one reading is worse than no renderer at all. TOML is in. It has one specification, one unambiguous data model, and a structure — tables, arrays of tables — that is genuinely renderable; and while it was designed for configuration, a great deal of TOML is written to be read: inventories, manifests, metadata records describing a set of files. Those are documents by use, whatever the format's origin. DocLang is in on the plainest reading of the rule: it is the XML a document converter writes when it has read a PDF or a scan, so every file in the format is a document by definition, and a browser handed one shows a tag tree, which is the markup and not the document, the same way it shows Markdown as text. The set is still curated on purpose — which is why this is the axe viewer, not a universal one.
 
 The components carry no look of their own, and that is deliberate. A standalone widget ships its own complete styling and imposes it on every host; an axe component ships almost none and wears the host's identity through the variable contract instead. That dependence is the reason the components live inside Axe rather than as separate libraries. They are built on the CSS base as a substrate, not decorated by it as a convenience — pull the base out from under the calendar and its toolbar buttons drop to bare browser defaults. The coupling isn't a packaging detail to engineer away; it is what the components are for. They are the proof that the contract is worth depending on.
 
@@ -49,6 +49,7 @@ cli/cleave.py deck.md --slides     # -> deck.html (a slide deck)
 cli/cleave.py data.csv             # -> data.html (an interactive table)
 cli/cleave.py team.ics             # -> team.html (a calendar)
 cli/cleave.py inventory.toml       # -> inventory.html (a structured document)
+cli/cleave.py report.dclg          # -> report.html (a converted document)
 cli/cleave.py report.md --brand mybrand.css   # inline a brand palette
 ```
 
@@ -81,6 +82,7 @@ sample.md             Demo Markdown document (also the document-view demo and fi
 sample.ics            Demo calendar feed (also the viewer demo and round-trip fixture).
 sample-slides.md      Demo slide deck (also the slides-view demo and fixture).
 sample.toml           Demo TOML document (also the TOML-view demo and fixture).
+sample.dclg           Demo DocLang document (also the DocLang-view demo and fixture).
 kitchen-sink.html     Reference page showing all styled HTML elements.
 brand-builder.html    Generates brand.css from color, font, shape, and shadow inputs.
 README.md             This file.
@@ -88,10 +90,10 @@ dependencies/
   marked.min.js       Markdown parser for the viewer (MIT licensed).
   purify.min.js       DOMPurify — sanitizes rendered Markdown (Apache-2.0 / MPL-2.0).
 cli/                  The command-line side: not web assets, not served.
-  cleave.py           Bakes a CSV/Markdown/iCalendar/TOML file into one self-contained
+  cleave.py           Bakes a CSV/Markdown/iCalendar/TOML/DocLang file into one self-contained
                       HTML file that renders from disk (file://) with no server.
 view/
-  index.html          Axe viewer: renders one CSV, Markdown, iCalendar, or TOML file.
+  index.html          Axe viewer: renders one CSV, Markdown, iCalendar, TOML, or DocLang file.
                       ?url=path/to/file
                       Markdown renders as a document or, with ?view=slides (or mode: slides
                       frontmatter), as a native slide deck.
@@ -208,6 +210,35 @@ const tree = TOML.parse(text, { typed: true });   // typed nodes, with the liter
 Plain mode returns objects, arrays, strings, booleans, numbers, and `TOML.Date`. Integers beyond `Number.MAX_SAFE_INTEGER` come back as `BigInt` rather than quietly losing digits. Typed mode returns each value with its TOML type, its parsed value, and the literal it was written as — the shape the renderer needs, and the reason the page can show `48500.00`. Invalid input throws `TOML.SyntaxError` with a line and column.
 
 Like every other component here, the renderer ships almost no look of its own: it wears the host's identity through the variable contract.
+
+## DocLang
+
+[DocLang](https://www.doclang.ai/) is the XML a document converter writes: the structure it found in a PDF or a scan, in a vocabulary built for language models. The axe viewer renders a `.dclg` file the same way it renders Markdown, and for the same reason: the file already says what each part of the document is, and the render maps that vocabulary onto the HTML element that means the same thing.
+
+```
+view/index.html?url=path/to/report.dclg
+```
+
+| In the document | On the page |
+| --- | --- |
+| `<heading level="n">` | An `<hn>` |
+| `<text>`, with its inline formatting | A paragraph, with `<strong>`, `<em>`, `<u>`, `<s>`, `<sup>`, `<sub>` |
+| `<list>`, with the printed markers or checkboxes | A list showing those markers |
+| `<table>` and `<index>` in OTSL, merged cells included | A real table, `<thead>`, row headers, `colspan` and `rowspan` |
+| `<picture>` | Its image; a chart's `<tabular>` data as a table under it |
+| `<code>` with a language label | A code block, the language in its corner |
+| `<formula>` | The LaTeX, shown as source |
+| `<field_region>` | A form read back: key beside values, a blank where the form was blank |
+| `<footnote>` | A footnote paragraph, reachable from its reference |
+| `<page_break/>` | A rule with the page number |
+| `<thread>` fragments | One block: a paragraph or list a page break split is rejoined |
+| `<href>` and `<xref>` | A link, out of the page or to the thread it names |
+
+Two of those rows are what make a converted document readable rather than merely visible. A converter closes every open element before a page break and reopens it after, tying the halves together with a thread; the viewer follows the thread, so a paragraph that ran across pages reads as one paragraph and a list that did reads as one list. And a picture is rendered as its image when there is one to show, and otherwise as what the converter read off it: the text inside the picture and its description, which is the fallback a reader wants when the image was left behind in the archive.
+
+Running headers and footers, and anything on the document's furniture or background layer, repeat on every page and are hidden by default; a toolbar toggle brings them back. Geometry, the `<location>` boxes a converter records for every element, is review-tool information and is ignored: reviewing a conversion against the page image is a different job from reading its result, and the viewer does the second.
+
+The parser is the browser's own `DOMParser`, so there is no engine file and no dependency; the renderer builds every node from the parsed tree and never hands document text to `innerHTML`. Links follow the same whitelist as TOML: `http(s)` and `mailto` for `<href>`, and for a picture's `<src>` those plus `data:image/` and relative paths, which resolve against the document. A bare `.dclg` written beside an `assets/` folder finds its pictures there, and so does a baked one if it is written into the same place. A `.dclx` archive is not rendered: it is a ZIP, which fails the text test the same way DOCX does, and what it adds over the bare file (page images, for review) is the review tool's business.
 
 ## Dark Mode
 

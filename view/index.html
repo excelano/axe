@@ -408,6 +408,188 @@
         }
         .toml-empty { color: var(--color-text-muted); }
 
+        /* --- DocLang view ---
+           A DocLang file already says what each part of a document is —
+           heading, paragraph, list, OTSL table, picture, code — so the
+           render maps each element onto the HTML element with the same
+           meaning and lets the base styles do the rest. It reads like the
+           Markdown view, at the same width, because it is the same kind of
+           thing: a document. */
+        .dclg-view {
+            width: 100%;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+        }
+
+        /* Page furniture — running headers and footers, and anything the
+           document puts on its furniture or background layer — repeats on
+           every page and reads as noise in a continuous flow, so it stays
+           hidden until the toolbar toggle asks for it. */
+        .dclg-furniture { display: none; }
+        .dclg-view.show-furniture .dclg-furniture {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+
+        /* A page break is a rule with the page number it opens. */
+        .dclg-page-break {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 2rem 0;
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .dclg-page-break::before,
+        .dclg-page-break::after {
+            content: '';
+            flex: 1;
+            border-top: 1px solid var(--color-border);
+        }
+
+        /* Inline vocabulary. <content> is the one place the format
+           preserves whitespace; everything else collapses like XML. */
+        .dclg-content { white-space: pre-wrap; }
+        .dclg-handwriting { font-family: cursive; }
+        .dclg-checkbox { font-family: var(--font-mono); }
+        span.dclg-heading { font-weight: 600; }
+        .dclg-hint {
+            font-size: 0.85em;
+            font-style: italic;
+            color: var(--color-text-muted);
+        }
+        .dclg-footnote { font-size: 0.85rem; }
+
+        /* A caption leads a paragraph, list, or group and follows a
+           picture, code block, or formula; a table gets a real <caption>. */
+        .dclg-figure > figcaption:first-child {
+            margin: 0 0 0.5rem;
+            text-align: left;
+        }
+
+        /* Code keeps the base <pre> look; the language label rides its
+           corner. Raw text inside collapses like XML, and only <content>
+           keeps its whitespace, so the rule is one rule. */
+        .dclg-code {
+            position: relative;
+            white-space: normal;
+        }
+        .dclg-code[data-label]::before {
+            content: attr(data-label);
+            position: absolute;
+            top: 0.35rem;
+            right: 0.6rem;
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+        }
+
+        /* A formula is LaTeX source, shown as source: no math engine is
+           vendored, and a reader can still read it. */
+        .dclg-formula {
+            font-family: var(--font-mono);
+            font-size: 0.9em;
+        }
+        div.dclg-formula {
+            text-align: center;
+            margin: 0 0 1rem;
+        }
+
+        /* Pictures. The image is the picture; the text the document
+           found inside it, and any description, are the fallback shown
+           only when there is no image to show. */
+        .dclg-picture img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+        }
+        span.dclg-picture img {
+            display: inline;
+            height: 1.25em;
+            width: auto;
+            vertical-align: middle;
+            margin: 0;
+        }
+        .dclg-picture-text,
+        .dclg-picture-placeholder { display: none; }
+        .dclg-picture.no-image img { display: none; }
+        .dclg-picture.no-image .dclg-picture-placeholder {
+            display: block;
+            padding: 1.5rem;
+            border: 1px dashed var(--color-border);
+            border-radius: var(--radius);
+            text-align: center;
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+        .dclg-picture.no-image .dclg-picture-text {
+            display: block;
+            padding: 1rem 1.25rem;
+            border: 1px dashed var(--color-border);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+        }
+        .dclg-picture .dclg-table-wrap { margin-top: 1rem; }
+
+        /* Lists. A list whose items carry their own markers — the printed
+           glyph or number, or a checkbox — shows those instead of the
+           browser's, in a column of their own. */
+        .dclg-list:not(.has-markers) > li > .dclg-marker { display: none; }
+        .dclg-list.has-markers {
+            list-style: none;
+            padding-left: 0.25rem;
+        }
+        .dclg-list.has-markers > li {
+            display: grid;
+            grid-template-columns: max-content minmax(0, 1fr);
+            column-gap: 0.6em;
+        }
+        .dclg-item > p { margin-bottom: 0.25rem; }
+        .dclg-item > :last-child { margin-bottom: 0; }
+
+        /* Tables: the base styles, plus a scroll container of their own,
+           since the page body must never scroll sideways. Row headers and
+           section rows take the surface so the axes of a table read. */
+        .dclg-table-wrap {
+            overflow-x: auto;
+            margin: 0 0 1.5rem;
+        }
+        .dclg-table { margin-bottom: 0; }
+        .dclg-table th.is-rhed,
+        .dclg-table th.is-corn,
+        .dclg-table th.is-srow {
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+        }
+        .dclg-table td > p,
+        .dclg-table th > p { margin-bottom: 0.25rem; }
+        .dclg-table td > :last-child,
+        .dclg-table th > :last-child { margin-bottom: 0; }
+
+        /* Fields: a form read back. Each item is a key beside its values;
+           a fillable value left blank is drawn as the blank it is. */
+        .dclg-field_region { margin: 0 0 1.5rem; }
+        .dclg-field_item {
+            margin: 0 0 0.6rem;
+            padding-left: 0.75rem;
+            border-left: 2px solid var(--color-border);
+        }
+        .dclg-field_item p { margin-bottom: 0.2rem; }
+        .dclg-key {
+            font-weight: 600;
+            margin-right: 0.5em;
+        }
+        .dclg-value.is-fillable {
+            display: inline-block;
+            min-width: 8em;
+            border-bottom: 1px dotted var(--color-text-muted);
+        }
+        p.dclg-value.is-fillable { display: block; }
+
         /* --- Slides view: native one-at-a-time presenter ---
            The stage is the largest 16:9 box that fits the viewport, and its
            type scales with `cqw` (container-query width) units, so the deck
@@ -561,6 +743,7 @@
             .col-date { display: none; }
             .md-view { padding: 1.5rem 1rem; }
             .toml-view { padding: 1.5rem 1rem; }
+            .dclg-view { padding: 1.5rem 1rem; }
             /* Below the key column's minimum there is no room for two
                columns, so the field grid stacks key over value. */
             .toml-fields { grid-template-columns: minmax(0, 1fr); gap: 0.1rem 0; }
@@ -633,6 +816,18 @@
     const TOML_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
                          'July', 'August', 'September', 'October', 'November', 'December'];
 
+    // The DocLang renderer's constants, up here for the same reason.
+    // Property elements form an element's head and are consumed by the
+    // host; the formatting map is DocLang's inline vocabulary onto HTML's.
+    const DCLG_PROPERTIES = new Set(['label', 'thread', 'xref', 'href', 'layer', 'location',
+                                     'caption', 'description', 'summary', 'custom']);
+    const DCLG_FORMATTING = { bold: 'strong', italic: 'em', underline: 'u', strikethrough: 's',
+                              superscript: 'sup', subscript: 'sub' };
+    const DCLG_CELLS = new Set(['fcel', 'ecel', 'ched', 'rhed', 'corn', 'srow']);
+    const DCLG_LINK_SCHEME = /^(?:https?:\/\/|mailto:)/i;
+    const DCLG_IMAGE_SCHEME = /^(?:https?:\/\/|data:image\/)/i;
+    const DCLG_ANY_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
+
     const renderers = {
         csv: renderCsv,
         tsv: renderCsv,
@@ -640,7 +835,8 @@
         markdown: renderMarkdownEntry,
         ics: renderIcal,
         ical: renderIcal,
-        toml: renderToml
+        toml: renderToml,
+        dclg: renderDoclang
     };
 
     // Baked, server-free mode: `cleave` inlines the document into a hidden
@@ -702,7 +898,7 @@
     } else {
         // No extension, local: nothing to render. Directory browsing lives in
         // the separate `browse` tool now, not the viewer.
-        showMessage('The viewer renders a single document. Point it at a <code>.csv</code>, <code>.md</code>, <code>.ics</code>, or <code>.toml</code> file.');
+        showMessage('The viewer renders a single document. Point it at a <code>.csv</code>, <code>.md</code>, <code>.ics</code>, <code>.toml</code>, or <code>.dclg</code> file.');
     }
 
 
@@ -1577,6 +1773,530 @@
         });
 
         return any;
+    }
+
+
+    // ==========================================================
+    // DocLang Renderer
+    // ==========================================================
+
+    // A DocLang file (doclang.ai) is XML whose vocabulary already says what
+    // each part of a document is — heading, paragraph, list, OTSL table,
+    // picture, code — so the render is a mapping from that vocabulary onto
+    // the HTML element with the same meaning, and the base styles do the
+    // rest. The browser's own XML parser reads the file, and every node
+    // here is built with createElement and text nodes, never innerHTML, so
+    // like TOML the document cannot contribute markup and needs no
+    // sanitizer. Geometry (<location>) is information for a review tool,
+    // not for a reader, and is ignored.
+    function renderDoclang(text) {
+        const xml = new DOMParser().parseFromString(text, 'application/xml');
+        const parseError = xml.getElementsByTagName('parsererror')[0];
+        if (parseError) {
+            showMessage('Could not parse <code>' + escHtml(name) + '</code>.<br>' + escHtml(dclgText(parseError)));
+            return;
+        }
+        const root = xml.documentElement;
+        if (root.localName !== 'doclang') {
+            showMessage('<code>' + escHtml(name) + '</code> is XML, but its root element is <code>&lt;' +
+                        escHtml(root.localName) + '&gt;</code>, not <code>&lt;doclang&gt;</code>.');
+            return;
+        }
+
+        const toolbar = document.getElementById('toolbar');
+        toolbar.style.display = 'flex';
+        document.getElementById('title').textContent = name;
+
+        const content = document.getElementById('content');
+        content.innerHTML = '';
+        content.className = 'dclg-view';
+        const ctx = { threads: new Map(), pages: 1, furniture: false };
+        dclgNodes(root.childNodes, content, ctx, false);
+
+        const version = root.getAttribute('version') || '0.7';
+        document.getElementById('info').textContent =
+            (ctx.pages > 1 ? ctx.pages + ' pages · ' : '') + 'DocLang ' + version;
+        if (ctx.furniture) addDclgFurnitureToggle(toolbar, content);
+    }
+
+    // Render a run of XML nodes into `container`. In inline context (inside
+    // a paragraph) text and formatting flow together; in block context each
+    // semantic element becomes a block and whitespace between them is
+    // dropped. Raw text is kept in both, because a list item or a table
+    // cell may be a "virtual <text>": unwrapped text the spec says to treat
+    // as if it were a paragraph.
+    function dclgNodes(nodes, container, ctx, inline) {
+        Array.prototype.forEach.call(nodes, function (node) {
+            if (node.nodeType === 3 || node.nodeType === 4) {   // text, CDATA
+                if (!inline && !node.nodeValue.trim()) return;
+                container.appendChild(document.createTextNode(node.nodeValue));
+                return;
+            }
+            if (node.nodeType !== 1) return;   // comments, processing instructions
+            const tag = node.localName;
+            if (DCLG_PROPERTIES.has(tag) || tag === 'head') return;   // element head: the host consumed it
+            if (DCLG_FORMATTING[tag]) {
+                const e = el(DCLG_FORMATTING[tag]);
+                dclgNodes(node.childNodes, e, ctx, true);
+                container.appendChild(e);
+                return;
+            }
+            switch (tag) {
+                case 'content':
+                case 'handwriting': {
+                    const e = el('span', 'dclg-' + tag);
+                    dclgNodes(node.childNodes, e, ctx, true);
+                    container.appendChild(e);
+                    return;
+                }
+                case 'rtl': {
+                    const e = el('span');
+                    e.dir = 'rtl';
+                    dclgNodes(node.childNodes, e, ctx, true);
+                    container.appendChild(e);
+                    return;
+                }
+                case 'checkbox': {
+                    const selected = node.getAttribute('class') === 'selected';
+                    const e = el('span', 'dclg-checkbox');
+                    e.textContent = selected ? '☑' : '☐';
+                    e.setAttribute('role', 'img');
+                    e.setAttribute('aria-label', selected ? 'checked' : 'unchecked');
+                    container.appendChild(e);
+                    return;
+                }
+                case 'page_break': {
+                    ctx.pages += 1;
+                    const e = el('div', 'dclg-page-break');
+                    e.textContent = 'Page ' + ctx.pages;
+                    container.appendChild(e);
+                    return;
+                }
+                default:
+                    dclgElement(node, container, ctx, inline);
+            }
+        });
+    }
+
+    // One semantic element. Its head is read first; then, if it continues
+    // a thread another fragment started, its body flows into that block —
+    // a paragraph split by a page break reads as one paragraph, a list
+    // split across pages is one list. Otherwise it becomes a block (or an
+    // inline run, when nested in a paragraph), framed by its caption.
+    function dclgElement(node, container, ctx, inline) {
+        const tag = node.localName;
+        const head = dclgHead(node);
+        const body = dclgBody(node);
+        if (tag === 'page_header' || tag === 'page_footer') head.furniture = true;
+
+        const thread = head.thread ? ctx.threads.get(head.thread) : null;
+        if (thread && thread.tag === tag && !inline && dclgContinue(tag, thread.el, head, body, ctx)) return;
+
+        const e = dclgBuild(tag, node, head, body, ctx, inline);
+        if (head.thread && !thread) {
+            e.id = dclgThreadId(head.thread);
+            ctx.threads.set(head.thread, { tag: tag, el: e });
+        }
+        const outer = inline ? e : dclgFrame(e, tag, head, ctx);
+        if (head.furniture) {
+            outer.classList.add('dclg-furniture');
+            ctx.furniture = true;
+        }
+        container.appendChild(outer);
+    }
+
+    // The element head, read wherever its properties sit rather than only
+    // as a leading run: the spec puts them first, and tolerating any order
+    // costs nothing.
+    function dclgHead(node) {
+        const head = { thread: null, xref: null, href: null, label: null, caption: null, description: '', furniture: false };
+        Array.prototype.forEach.call(node.children, function (c) {
+            switch (c.localName) {
+                case 'thread':      head.thread = c.getAttribute('thread_id'); break;
+                case 'xref':        head.xref = c.getAttribute('thread_id'); break;
+                case 'href':        head.href = c.getAttribute('uri'); break;
+                case 'label':       head.label = c.getAttribute('value'); break;
+                case 'caption':     head.caption = c; break;
+                case 'description': head.description = dclgText(c); break;
+                case 'layer': {
+                    const layer = c.getAttribute('value');
+                    head.furniture = layer === 'furniture' || layer === 'background';
+                    break;
+                }
+            }
+        });
+        return head;
+    }
+
+    function dclgBody(node) {
+        return Array.prototype.filter.call(node.childNodes, function (n) {
+            return !(n.nodeType === 1 && DCLG_PROPERTIES.has(n.localName));
+        });
+    }
+
+    function dclgBuild(tag, node, head, body, ctx, inline) {
+        switch (tag) {
+            case 'heading':
+            case 'field_heading': {
+                // A field heading is scoped to the form it sits in, and a
+                // form sits under the document's own headings, so its
+                // levels start two below.
+                const depth = parseInt(node.getAttribute('level'), 10) || 1;
+                const level = Math.min(tag === 'heading' ? depth : depth + 2, 6);
+                const e = el(inline ? 'span' : 'h' + level, 'dclg-' + tag);
+                dclgFlow(e, body, head, ctx);
+                return e;
+            }
+            case 'code': {
+                if (inline) {
+                    const e = el('code');
+                    dclgFlow(e, body, head, ctx);
+                    return e;
+                }
+                const pre = el('pre', 'dclg-code');
+                if (head.label && head.label !== 'undefined') pre.setAttribute('data-label', head.label);
+                const e = el('code');
+                dclgFlow(e, body, head, ctx);
+                pre.appendChild(e);
+                return pre;
+            }
+            case 'formula': {
+                const e = el(inline ? 'span' : 'div', 'dclg-formula');
+                dclgFlow(e, body, head, ctx);
+                return e;
+            }
+            case 'picture':
+                return dclgPicture(head, body, ctx, inline);
+            case 'list': {
+                const list = el(node.getAttribute('class') === 'ordered' ? 'ol' : 'ul', 'dclg-list');
+                dclgListItems(body, list, ctx);
+                return list;
+            }
+            case 'table':
+            case 'index':
+            case 'tabular':
+                return dclgTable(body, el('table', 'dclg-table'), ctx);
+            case 'group':
+            case 'field_region':
+            case 'field_item': {
+                const e = el(inline ? 'span' : 'div', 'dclg-' + tag);
+                dclgNodes(body, e, ctx, inline);
+                return e;
+            }
+            case 'text':
+            case 'footnote':
+            case 'page_header':
+            case 'page_footer':
+            case 'marker':
+            case 'key':
+            case 'value':
+            case 'hint':
+            case 'caption': {
+                const e = el(inline ? 'span' : 'p', 'dclg-' + tag);
+                if (tag === 'value' && node.getAttribute('class') === 'fillable') e.classList.add('is-fillable');
+                dclgFlow(e, body, head, ctx);
+                return e;
+            }
+            default: {
+                // Custom vocabulary or a newer spec: render what is inside
+                // it in the same context, and claim nothing about it.
+                const e = el(inline ? 'span' : 'div');
+                dclgNodes(body, e, ctx, inline);
+                return e;
+            }
+        }
+    }
+
+    // A second fragment of a thread. Returns false for the kinds that have
+    // nothing to append into, so the caller renders it as its own block.
+    function dclgContinue(tag, target, head, body, ctx) {
+        switch (tag) {
+            case 'list':
+                dclgListItems(body, target, ctx);
+                return true;
+            case 'table':
+            case 'index':
+                dclgTable(body, target, ctx);
+                return true;
+            case 'text':
+            case 'heading':
+            case 'footnote':
+            case 'page_header':
+            case 'page_footer':
+            case 'key':
+            case 'value':
+            case 'hint':
+                target.appendChild(document.createTextNode(' '));
+                dclgFlow(target, body, head, ctx);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // The frame around a block: its caption, placed where a reader expects
+    // it, and for a table the scroll container the page needs.
+    function dclgFrame(e, tag, head, ctx) {
+        switch (tag) {
+            case 'picture':
+                if (head.caption) e.appendChild(dclgCaption(head.caption, 'figcaption', ctx));
+                return e;
+            case 'table':
+            case 'index': {
+                if (head.caption) e.insertBefore(dclgCaption(head.caption, 'caption', ctx), e.firstChild);
+                const wrap = el('div', 'dclg-table-wrap');
+                wrap.appendChild(e);
+                return wrap;
+            }
+            case 'code':
+            case 'formula': {
+                if (!head.caption) return e;
+                const fig = el('figure', 'dclg-figure');
+                fig.appendChild(e);
+                fig.appendChild(dclgCaption(head.caption, 'figcaption', ctx));
+                return fig;
+            }
+            default: {
+                if (!head.caption) return e;
+                const fig = el('figure', 'dclg-figure');
+                fig.appendChild(dclgCaption(head.caption, 'figcaption', ctx));
+                fig.appendChild(e);
+                return fig;
+            }
+        }
+    }
+
+    function dclgCaption(captionNode, tagName, ctx) {
+        const e = el(tagName);
+        dclgFlow(e, dclgBody(captionNode), dclgHead(captionNode), ctx);
+        return e;
+    }
+
+    // Inline flow of a body into an element, through the link its head
+    // asks for: an <href> becomes a real link when it is http(s) or
+    // mailto, an <xref> an in-page link to the thread it names.
+    function dclgFlow(e, body, head, ctx) {
+        dclgNodes(body, dclgLinkWrap(e, head), ctx, true);
+    }
+
+    function dclgLinkWrap(e, head) {
+        let href = null;
+        let external = false;
+        if (head.xref) {
+            href = '#' + dclgThreadId(head.xref);
+        } else if (head.href && DCLG_LINK_SCHEME.test(head.href)) {
+            href = head.href;
+            external = true;
+        }
+        if (!href) return e;
+        const a = el('a');
+        a.href = href;
+        if (external) {
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+        }
+        e.appendChild(a);
+        return a;
+    }
+
+    function dclgThreadId(id) {
+        return 'dclg-thread-' + String(id).replace(/[^\w-]/g, '_');
+    }
+
+    // A picture is its image. The text the document found inside it, and
+    // the description, are kept as the fallback that shows when there is
+    // no image to show — no <src>, or one that will not load. A chart's
+    // structured data (<tabular>) is rendered as a table under the image,
+    // since the numbers are what a reader would want from a chart.
+    function dclgPicture(head, body, ctx, inline) {
+        const fig = el(inline ? 'span' : 'figure', 'dclg-picture');
+        const link = dclgLinkWrap(fig, head);
+        let src = null;
+        let tabular = null;
+        const rest = [];
+        body.forEach(function (n) {
+            if (n.nodeType === 1 && n.localName === 'src') src = dclgImageSource(n.getAttribute('uri'));
+            else if (n.nodeType === 1 && n.localName === 'tabular') tabular = n;
+            else rest.push(n);
+        });
+
+        if (src) {
+            const img = el('img');
+            img.src = src;
+            img.alt = head.description || (head.caption ? dclgText(head.caption) : '');
+            img.addEventListener('error', function () { fig.classList.add('no-image'); });
+            link.appendChild(img);
+        } else {
+            fig.classList.add('no-image');
+        }
+
+        if (!inline) {
+            const placeholder = el('div', 'dclg-picture-placeholder');
+            placeholder.textContent = 'Picture' +
+                (head.label && head.label !== 'undefined' ? ': ' + head.label.replace(/_/g, ' ') : '') +
+                (head.description ? ' — ' + head.description : '');
+            fig.appendChild(placeholder);
+        }
+        if (rest.some(function (n) { return n.nodeType === 1 || n.nodeValue.trim(); })) {
+            const t = el(inline ? 'span' : 'div', 'dclg-picture-text');
+            dclgNodes(rest, t, ctx, inline);
+            fig.appendChild(t);
+        }
+        if (tabular) {
+            const wrap = el('div', 'dclg-table-wrap');
+            wrap.appendChild(dclgTable(dclgBody(tabular), el('table', 'dclg-table'), ctx));
+            fig.appendChild(wrap);
+        }
+        return fig;
+    }
+
+    // An image source earns an <img> when it is an http(s) URL (the page's
+    // CSP decides whether it loads), a data:image URI, or a relative path,
+    // which resolves against the document the way a picture's assets/
+    // folder sits beside the file. Any other scheme is dropped.
+    function dclgImageSource(uri) {
+        if (!uri) return null;
+        if (DCLG_IMAGE_SCHEME.test(uri)) return uri;
+        if (DCLG_ANY_SCHEME.test(uri)) return null;
+        try {
+            return new URL(uri, fetchUrl ? new URL(fetchUrl, location.href) : location.href).href;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    // List items: an <ldiv> opens each one and may carry the printed
+    // marker; whatever follows until the next <ldiv> is the item, raw text
+    // included. Every item gets a marker cell so a continuation fragment
+    // lines up with the first, and the list shows them only once one
+    // item has actually supplied a marker.
+    function dclgListItems(body, list, ctx) {
+        let content = null;
+        body.forEach(function (n) {
+            if (n.nodeType === 1 && n.localName === 'ldiv') {
+                content = dclgListItem(list, Array.prototype.find.call(n.children, function (c) {
+                    return c.localName === 'marker';
+                }), ctx);
+                return;
+            }
+            if (!content) {
+                if (n.nodeType !== 1 && !n.nodeValue.trim()) return;
+                content = dclgListItem(list, null, ctx);   // content before any <ldiv>: tolerated
+            }
+            dclgNodes([n], content, ctx, false);
+        });
+    }
+
+    function dclgListItem(list, markerNode, ctx) {
+        const li = el('li');
+        const marker = el('span', 'dclg-marker');
+        if (markerNode) {
+            dclgFlow(marker, dclgBody(markerNode), dclgHead(markerNode), ctx);
+            list.classList.add('has-markers');
+        }
+        li.appendChild(marker);
+        const content = el('div', 'dclg-item');
+        li.appendChild(content);
+        list.appendChild(li);
+        return content;
+    }
+
+    // OTSL: a table is a stream of cell tokens, each opening a cell that
+    // owns the content after it, with <nl/> closing the row. The merge
+    // tokens (<lcel/>, <ucel/>, <xcel/>) are positions that belong to the
+    // cell to their left or above, so the grid is built first as a grid of
+    // owners, and a cell's colspan and rowspan fall out of the positions it
+    // owns. Leading rows made only of column headers go in <thead>; rows of
+    // a continuation fragment are appended to the body of the table the
+    // thread started.
+    function dclgTable(body, table, ctx) {
+        const rows = [];
+        let row = [];
+        let cell = null;
+        body.forEach(function (n) {
+            if (n.nodeType === 1) {
+                const t = n.localName;
+                if (DCLG_CELLS.has(t)) {
+                    cell = { kind: t, nodes: [], r: rows.length, c: row.length };
+                    row.push(cell);
+                    return;
+                }
+                if (t === 'lcel' || t === 'ucel' || t === 'xcel') {
+                    const owner = t === 'lcel' ? row[row.length - 1] : (rows[rows.length - 1] || [])[row.length];
+                    cell = owner || { kind: 'ecel', nodes: [], r: rows.length, c: row.length };
+                    row.push(cell);
+                    return;
+                }
+                if (t === 'nl') {
+                    rows.push(row);
+                    row = [];
+                    cell = null;
+                    return;
+                }
+            } else if (!n.nodeValue.trim()) {
+                return;
+            }
+            if (!cell) {   // content before any token: tolerated as a cell
+                cell = { kind: 'fcel', nodes: [], r: rows.length, c: row.length };
+                row.push(cell);
+            }
+            cell.nodes.push(n);
+        });
+        if (row.length) rows.push(row);
+
+        rows.forEach(function (row, r) {
+            row.forEach(function (owner, c) {
+                owner.rEnd = Math.max(owner.rEnd === undefined ? owner.r : owner.rEnd, r);
+                owner.cEnd = Math.max(owner.cEnd === undefined ? owner.c : owner.cEnd, c);
+            });
+        });
+
+        const continuing = table.tBodies.length > 0;
+        let headerRows = 0;
+        if (!continuing) {
+            while (headerRows < rows.length && rows[headerRows].every(function (o) {
+                return o.kind === 'ched' || o.kind === 'corn' || o.kind === 'ecel';
+            }) && rows[headerRows].some(function (o) { return o.kind !== 'ecel'; })) headerRows += 1;
+        }
+        const thead = headerRows ? el('thead') : null;
+        const tbody = continuing ? table.tBodies[0] : el('tbody');
+
+        rows.forEach(function (row, r) {
+            const tr = el('tr');
+            row.forEach(function (o, c) {
+                if (o.r !== r || o.c !== c) return;   // a position another cell owns
+                const isHeader = o.kind === 'ched' || o.kind === 'rhed' || o.kind === 'corn' || o.kind === 'srow';
+                const td = el(isHeader ? 'th' : 'td', 'is-' + o.kind);
+                if (o.kind === 'ched' || o.kind === 'corn') td.scope = o.cEnd > o.c ? 'colgroup' : 'col';
+                if (o.kind === 'rhed') td.scope = o.rEnd > o.r ? 'rowgroup' : 'row';
+                if (o.cEnd > o.c) td.colSpan = o.cEnd - o.c + 1;
+                if (o.rEnd > o.r) td.rowSpan = o.rEnd - o.r + 1;
+                dclgNodes(o.nodes, td, ctx, false);
+                tr.appendChild(td);
+            });
+            (r < headerRows ? thead : tbody).appendChild(tr);
+        });
+        if (thead) table.appendChild(thead);
+        if (!continuing) table.appendChild(tbody);
+        return table;
+    }
+
+    function dclgText(node) {
+        return (node.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function addDclgFurnitureToggle(toolbar, content) {
+        const label = el('label');
+        const box = el('input');
+        box.type = 'checkbox';
+        box.addEventListener('change', function () {
+            content.classList.toggle('show-furniture', box.checked);
+        });
+        label.appendChild(box);
+        label.appendChild(document.createTextNode(' Page furniture'));
+        const toggle = toolbar.querySelector('.theme-toggle');
+        toolbar.insertBefore(el('span', 'separator'), toggle);
+        toolbar.insertBefore(label, toggle);
     }
 
 

@@ -1,5 +1,5 @@
 /* ============================================================
-   AXE v1.7.7
+   AXE v1.8.0
    Semantic-first. Classless defaults.
    Write plain HTML. It looks good.
 
@@ -11,7 +11,7 @@
    calendar.css / calendar.js. Audit a deployment with
    `curl <site>/axe/axe.css | head`, or read --axe-version in devtools. */
 :root {
-    --axe-version: "1.7.7";
+    --axe-version: "1.8.0";
 
     /* Stacking scale. Structural, not brand: a shared ladder so a sticky
        bar, a popover, and a modal layer predictably across components (e.g.

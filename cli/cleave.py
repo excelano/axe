@@ -2,7 +2,7 @@
 """cleave - Bake an Axe-rendered document into one self-contained HTML file.
 
 Usage:
-  cleave <input.{csv,tsv,md,markdown,ics,ical,toml}> [output.html]
+  cleave <input.{csv,tsv,md,markdown,ics,ical,toml,dclg}> [output.html]
          [--slides | --view doc|slides] [--brand brand.css] [--name LABEL]
 
 Produces a single portable .html with the document and only the assets that
@@ -92,6 +92,10 @@ NEEDS = {
     # builds nodes with textContent rather than markup, so a document
     # never contributes HTML to inline away.
     "toml":     {"marked": False, "purify": False, "calendar": False, "toml": True},
+    # DocLang needs nothing extra either: the browser's own XML parser reads
+    # it and the renderer builds nodes, never markup. Pictures referenced by
+    # relative path resolve beside the baked file, so bake next to assets/.
+    "dclg":     {"marked": False, "purify": False, "calendar": False, "toml": False},
 }
 
 
@@ -122,7 +126,7 @@ def attr_escape(text):
 def main():
     ap = argparse.ArgumentParser(prog="cleave",
                                  description="Bake an Axe document into a self-contained HTML file.")
-    ap.add_argument("input", help="input .csv/.tsv/.md/.markdown/.ics/.ical/.toml")
+    ap.add_argument("input", help="input .csv/.tsv/.md/.markdown/.ics/.ical/.toml/.dclg")
     ap.add_argument("output", nargs="?", help="output .html (default: input name with .html)")
     ap.add_argument("--view", choices=["auto", "doc", "slides"], default="auto",
                     help="Markdown render mode (default: auto -- frontmatter/default decides)")
@@ -136,7 +140,7 @@ def main():
         sys.exit(f"Error: file not found: {src}")
     ext = src.suffix.lstrip(".").lower()
     if ext not in NEEDS:
-        sys.exit(f"Error: unsupported type '.{ext}'. Use csv, tsv, md, markdown, ics, ical, or toml.")
+        sys.exit(f"Error: unsupported type '.{ext}'. Use csv, tsv, md, markdown, ics, ical, toml, or dclg.")
     if not TEMPLATE.is_file():
         sys.exit(f"Error: viewer template not found at {TEMPLATE}\n"
                  f"cleave needs the Axe assets to inline. Install the cleave "

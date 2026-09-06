@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Demo DocLang document, and the viewer's DocLang fixture.
+
+  DocLang (doclang.ai) is what a document conversion writes: the structure
+  a converter found in a PDF or a scan, in a vocabulary an LLM can read.
+  This file is shaped like that output, a two-page memo with running
+  headers and footers, a paragraph and a list split by the page break, a
+  footnote, a table with merged cells, a chart with its data, a code
+  listing, a formula, and a form. Open it with ?url=sample.dclg.
+-->
+<doclang xmlns="https://www.doclang.ai/ns/v0" version="0.7">
+  <head>
+    <default_resolution width="512" height="512"/>
+  </head>
+
+  <page_header>
+    <layer value="furniture"/>
+    <location value="40"/><location value="20"/><location value="470"/><location value="30"/>
+    Excelano · Records Programme · Internal
+  </page_header>
+
+  <heading>
+    <location value="40"/><location value="50"/><location value="470"/><location value="70"/>
+    Reading a Converted Document
+  </heading>
+  <text>
+    <location value="40"/><location value="78"/><location value="470"/><location value="86"/>
+    A memo on what the converter kept, written as the converter would write it
+  </text>
+
+  <heading level="2">Summary</heading>
+  <text>
+    <thread thread_id="1"/>
+    When a scanned report is converted, the result is not the report. It is a
+    record of what the converter <bold>recognised</bold>: which lines were
+    headings, which blocks were paragraphs, where a table began and ended, and
+    what the cells said. This memo is written in that form so that the viewer
+    can be judged on the same material a real conversion produces. Its
+    <italic>shape</italic> matters more than its subject, so the subject is
+    the memo itself. The paragraph you are reading was
+    <text><href uri="https://www.doclang.ai/"/>written in DocLang</text>,
+    and it continues on the next page, where the viewer joins it back into
+    one paragraph.
+  </text>
+
+  <heading level="2">What the converter keeps</heading>
+  <text>
+    Structure survives conversion better than looks do. The list below is
+    ordered<marker><xref thread_id="7"/><superscript>1</superscript></marker>
+    because the source numbered it:
+  </text>
+  <list class="ordered">
+    <thread thread_id="2"/>
+    <ldiv><marker>1.</marker></ldiv>
+    <text>Headings, with their level, which is what makes an outline possible.</text>
+    <ldiv><marker>2.</marker></ldiv>
+    <text>
+      Paragraphs, with inline <underline>emphasis</underline>, the occasional
+      <strikethrough>correction</strikethrough>, subscripts like H<subscript>2</subscript>O,
+      and a <handwriting>margin note</handwriting> in someone's hand.
+    </text>
+    <ldiv><marker>3.</marker></ldiv>
+    <text>Lists, including the ones that check things off:</text>
+    <list>
+      <ldiv><marker><checkbox class="selected"/></marker></ldiv>
+      <text>Confirm page count</text>
+      <ldiv><marker><checkbox/></marker></ldiv>
+      <text>Confirm every table has a caption</text>
+    </list>
+  </list>
+
+  <footnote>
+    <thread thread_id="7"/>
+    <superscript>1</superscript> The converter records the printed number as
+    the item's marker, so a renumbered list still shows the numbers the page
+    showed.
+  </footnote>
+
+  <page_footer>
+    <layer value="furniture"/>
+    Page 1 of 2
+  </page_footer>
+  <page_break/>
+
+  <page_header>
+    <layer value="furniture"/>
+    Excelano · Records Programme · Internal
+  </page_header>
+
+  <text>
+    <thread thread_id="1"/>
+    That is the point of a thread: a component the page split is one
+    component to the reader.
+  </text>
+
+  <list class="ordered">
+    <thread thread_id="2"/>
+    <ldiv><marker>4.</marker></ldiv>
+    <text>Tables, as the grid the converter saw, merged cells included.</text>
+    <ldiv><marker>5.</marker></ldiv>
+    <text>Pictures, and for a chart, the numbers behind it.</text>
+  </list>
+
+  <heading level="2">Tables</heading>
+  <table>
+    <caption>Table 1. Conversion quality on the sample set, by document type</caption>
+    <corn/>Document type<ched/>Pages<ched/>Recognised<lcel/><nl/>
+    <ucel/><ucel/><ched/>Headings<ched/>Tables<nl/>
+    <rhed/>Scanned reports<fcel/>412<fcel/>97%<fcel/>91%<nl/>
+    <rhed/>Born-digital PDFs<fcel/>1,180<fcel/>99%<fcel/>98%<nl/>
+    <rhed/>Forms<fcel/>96<fcel/>88%<fcel/>—<nl/>
+    <srow/>All document types<lcel/><lcel/><lcel/><nl/>
+    <rhed/>Total<fcel/>1,688<fcel/>98%<fcel/>96%<nl/>
+  </table>
+  <text>
+    A row header stays on the left, a column header stays on top, and the
+    corner cell is the one where both meet. The merged header shows how the
+    converter records a cell that spans two columns.
+  </text>
+
+  <heading level="2">Pictures and charts</heading>
+  <picture class="chart">
+    <label value="bar_chart"/>
+    <caption>Figure 1. Documents converted per quarter</caption>
+    <description>A bar chart of four quarters, rising from 160 to 340.</description>
+    <src uri="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMjAgMTgwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZjRmMWVhIi8+CjxnIGZpbGw9IiMyZjVkN2MiPgo8cmVjdCB4PSI0MCIgeT0iOTYiIHdpZHRoPSI0NCIgaGVpZ2h0PSI2NCIvPjxyZWN0IHg9IjEwNCIgeT0iNzIiIHdpZHRoPSI0NCIgaGVpZ2h0PSI4OCIvPgo8cmVjdCB4PSIxNjgiIHk9IjQwIiB3aWR0aD0iNDQiIGhlaWdodD0iMTIwIi8+PHJlY3QgeD0iMjMyIiB5PSIyNCIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEzNiIvPgo8L2c+CjxnIGZpbGw9IiMzMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiPgo8dGV4dCB4PSI2MiIgeT0iMTc0Ij5RMTwvdGV4dD48dGV4dCB4PSIxMjYiIHk9IjE3NCI+UTI8L3RleHQ+PHRleHQgeD0iMTkwIiB5PSIxNzQiPlEzPC90ZXh0Pjx0ZXh0IHg9IjI1NCIgeT0iMTc0Ij5RNDwvdGV4dD4KPHRleHQgeD0iNjIiIHk9IjkwIj4xNjA8L3RleHQ+PHRleHQgeD0iMTI2IiB5PSI2NiI+MjIwPC90ZXh0Pjx0ZXh0IHg9IjE5MCIgeT0iMzQiPjMwMDwvdGV4dD48dGV4dCB4PSIyNTQiIHk9IjE4Ij4zNDA8L3RleHQ+CjwvZz4KPGxpbmUgeDE9IjMwIiB5MT0iMTYwIiB4Mj0iMjkwIiB5Mj0iMTYwIiBzdHJva2U9IiMzMzMiLz4KPC9zdmc+"/>
+    <tabular>
+      <ched/>Quarter<ched/>Documents<nl/>
+      <fcel/>Q1<fcel/>160<nl/>
+      <fcel/>Q2<fcel/>220<nl/>
+      <fcel/>Q3<fcel/>300<nl/>
+      <fcel/>Q4<fcel/>340<nl/>
+    </tabular>
+  </picture>
+  <picture>
+    <label value="photograph"/>
+    <caption>Figure 2. The scanning station</caption>
+    <description>A flatbed scanner on a desk, with a stack of bound reports beside it.</description>
+    <text>SCAN STATION 2</text>
+    <text>Reports in → Records out</text>
+  </picture>
+  <text>
+    A picture is its image. When the archive that held the image is not
+    beside the file, the viewer shows what the converter read off it
+    instead, which is what Figure 2 is doing above.
+  </text>
+
+  <heading level="2">Code and formulas</heading>
+  <code>
+    <label value="Shell"/>
+    <caption>Listing 1. Converting one report</caption>
+    <content>docling report.pdf --to doclang
+axe/view/?url=report.dclg</content>
+  </code>
+  <text>
+    The recognition rate in Table 1 is the share of true components the
+    converter found, <formula>r = \frac{\text{found}}{\text{present}}</formula>,
+    and the figure the programme tracks is its complement:
+  </text>
+  <formula>
+    <caption>Equation 1. Miss rate</caption>
+    m = 1 - \frac{\text{found}}{\text{present}}
+  </formula>
+
+  <heading level="2">Forms</heading>
+  <text>
+    A form converts to a field region: each item is a key with its values,
+    and a value the form left blank stays blank.
+  </text>
+  <field_region>
+    <field_heading>Conversion request</field_heading>
+    <field_item>
+      <key>Requested by:</key>
+      <value>Records Programme</value>
+    </field_item>
+    <field_item>
+      <key>Source:</key>
+      <value>Bound reports, 1998–2004</value>
+      <value>Loose correspondence, 2005</value>
+    </field_item>
+    <field_item>
+      <key>Target date:</key>
+      <value class="fillable"></value>
+      <hint>Format: YYYY-MM-DD</hint>
+    </field_item>
+    <field_item>
+      <key>Priority:</key>
+      <value><checkbox class="selected"/> Normal</value>
+      <value><checkbox/> Urgent</value>
+    </field_item>
+  </field_region>
+
+  <group>
+    <caption>Sign-off</caption>
+    <text>Reviewed against the source pages by <handwriting>D. Anderson</handwriting>.</text>
+  </group>
+
+  <page_footer>
+    <layer value="furniture"/>
+    Page 2 of 2
+  </page_footer>
+</doclang>
