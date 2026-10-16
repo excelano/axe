@@ -361,12 +361,14 @@ function eventDayRange(ev, zone) {
     return { startKey: start.dayKey, endKey, start };
 }
 
-// Sortable key for an event's start (all-day sorts to start of day).
+// Sortable key for an event's start (all-day sorts to start of day in `zone`,
+// so it lands among timed events on the same day rather than at UTC midnight).
 function startSortKey(ev, zone) {
     const r = tz.resolve(ev.dtstart, zone);
     if (r.allDay) {
         const [Y, Mo, D] = r.dayKey.split('-').map(Number);
-        return Date.UTC(Y, Mo - 1, D, 0, 0, 0);
+        const midnight = zone ? tz.wallToInstant(Y, Mo, D, 0, 0, 0, zone) : new Date(Y, Mo - 1, D);
+        return midnight.getTime();
     }
     return r.instant.getTime();
 }
