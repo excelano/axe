@@ -1,5 +1,5 @@
 /* ============================================================
-   AXE TOML v1.8.0
+   AXE TOML v1.8.1
    A TOML v1.0.0 parser for axe.
 
    The axe viewer renders .toml with this engine the same way it
@@ -716,7 +716,7 @@ const TOML = {
     SyntaxError: TomlSyntaxError,
     // Version. Keep in sync with the axe.css / calendar.js headers and
     // the --axe-version property; read at runtime via TOML.version.
-    version: '1.8.0'
+    version: '1.8.1'
 };
 
 if (typeof global !== 'undefined' && global) global.TOML = TOML;
