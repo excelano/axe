@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Author: David M. Anderson
+# Built with AI assistance (Claude, Anthropic)
 """cleave - Bake an Axe-rendered document into one self-contained HTML file.
 
 Usage:

@@ -11,11 +11,9 @@
 # and the suffix is what tells you a published copy came from an untagged tree.
 # Stamp plain only when you tag. See the Versioning section in README.md.
 #
-# Touches the 8 stamps: axe.css (header + --axe-version), calendar.css (header),
+# Touches the stamps: axe.css (header + --axe-version), calendar.css (header),
 # calendar.js (header + Calendar.version), toml.js (header + TOML.version), and
-# kitchen-sink.html (footer). It
-# does NOT edit the README changelog — those notes are prose, so add a
-# "### <version> (date)" entry by hand, then commit and tag.
+# kitchen-sink.html (footer). Then commit and tag.
 #
 set -euo pipefail
 cd "$(dirname "$0")"

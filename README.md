@@ -103,7 +103,7 @@ view/
 
 Everything in Axe is a web asset a site serves, with one exception: `cli/` is the command-line side, and a site that deploys Axe should exclude it. It is a directory rather than a loose file so the exclusion is a single unambiguous rule, and so that nothing there is ever mistaken for something to serve. `cleave` needs the viewer and the stylesheets to do its job; the viewer and the stylesheets never need `cleave`.
 
-The same one-way rule explains why two repositories that work together sit in different GitHub organizations. Axe lives in `excelano` because Excelano products ride it directly; `browse` lives in `anderix` because it is a personal-site tool that consumes Axe rather than something Axe or any Excelano deliverable depends on. The arrow points one way — browse needs the viewer and the stylesheets, and neither needs browse — so promoting the dependency without dragging the dependent along is the correct shape, not an oversight. Consumers are unaffected either way: sites pick Axe up through an `axe -> ~/axe` filesystem symlink that never knew which organization owned the repository.
+The same one-way rule places the two repositories: Axe lives in `excelano`, and [browse](https://github.com/anderix/browse), which consumes the viewer and the stylesheets and is needed by neither, lives in `anderix`. Sites pick Axe up through an `axe -> ~/axe` filesystem symlink, whichever organization owns the repository.
 
 Each project provides its own `brand.css` defining the visual identity. `axe.css` is universal and shared. Project-specific component classes go in the project's own stylesheet.
 
@@ -124,7 +124,7 @@ Axe provides two layout containers:
 
 `<section>` groups content with border separators.
 
-`.grid` is the only class the CSS base adds. It creates a responsive card grid. Children can be `<article>` or `<a>` elements. (The document components carry their own classes, namespaced under `.axe-cal` and the viewer chrome.)
+`.grid` creates a responsive card grid. Children can be `<article>` or `<a>` elements. (The document components carry their own classes, namespaced under `.axe-cal` and the viewer chrome.)
 
 ## Calendar (iCalendar)
 
@@ -135,7 +135,7 @@ view/index.html?url=path/to/feed.ics
 view/index.html?url=path/to/feed.ics&view=week
 ```
 
-Append `&view=` to open on a specific view — `day`, `week`, `month`, or `list`. It's the same `?view=` parameter Markdown uses for `doc`/`slides`, its valid values keyed to the file type. Omit it (or pass anything unrecognized) and the calendar opens on Month, exactly as before — on a narrow screen the existing responsive override still makes List the default.
+Append `&view=` to open on a specific view — `day`, `week`, `month`, or `list`. It's the same `?view=` parameter Markdown uses for `doc`/`slides`, its valid values keyed to the file type. Omit it (or pass anything unrecognized) and the calendar opens on Month; on a narrow screen the responsive override makes List the default.
 
 `calendar.js` is the engine behind it: a single classic script with no dependencies and no build step, the same relationship `marked.min.js` has with Markdown. It parses RFC 5545 iCalendar, recurrence included, and renders four views — a Day and Week time grid with overlap-aware event columns and a live current-time line, a Month grid with true multi-day spanning bars, and a lazy-loading List — then exports back to CSV (RFC 4180) or iCalendar (round-trip stable). It also embeds in any page on its own.
 
@@ -198,7 +198,7 @@ Numbers are shown as they were written. `48500.00` keeps its trailing zeros, `0x
 
 A toolbar filter hides what doesn't match, which beats highlighting when the answer should end up on one screen. Filtering by a section's name keeps that section whole.
 
-`toml.js` is the engine behind it: a single classic script with no dependencies and no build step, the same relationship `calendar.js` has with iCalendar. It implements TOML v1.0.0 and is validated against the official [toml-test](https://github.com/toml-lang/toml-test) suite — 210 valid documents parsed correctly and 490 invalid ones rejected. The nine remaining cases in that suite are files whose *bytes* are not valid UTF-8; the decoder replaces those before any string reaches the parser, in the browser (`Response.text()`) exactly as in Node, so no string-taking parser can detect them.
+`toml.js` is the engine behind it: a single classic script with no dependencies and no build step, the same relationship `calendar.js` has with iCalendar. It implements TOML v1.0.0 and is validated against the official [toml-test](https://github.com/toml-lang/toml-test) suite: every valid document parses and every invalid one is rejected, apart from the cases whose *bytes* are not valid UTF-8; the decoder replaces those before any string reaches the parser, in the browser (`Response.text()`) exactly as in Node, so no string-taking parser can detect them.
 
 It embeds in any page on its own:
 
@@ -313,8 +313,8 @@ The viewer renders document content as live HTML in your site's origin, so treat
 
 ## Versioning
 
-Axe carries a single version number so you can tell which build a site is running — it's vendored into several projects, and copies drift. The number is stamped in the file headers (`axe.css`, `calendar.css`, `calendar.js`), exposed as the `--axe-version` custom property, and as `Calendar.version`. To audit a deployment, `curl https://site/axe/axe.css | head`, or read `getComputedStyle(document.documentElement).getPropertyValue('--axe-version')` (or `Calendar.version`) in the console. Bump all of those together on release.
+Axe carries a single version number so you can tell which build a site is running — it's vendored into several projects, and copies drift. The number is stamped in the header of every stylesheet and engine, exposed as the `--axe-version` custom property and as each engine's `version` (`Calendar.version`, `TOML.version`); `set-version.sh` is the list of where it lives. To audit a deployment, `curl https://site/axe/axe.css | head`, or read `getComputedStyle(document.documentElement).getPropertyValue('--axe-version')` (or `Calendar.version`) in the console. Bump all of those together on release.
 
 This is a deploy-tracking stamp, not a strict semver contract; git remains the source of truth for what changed. To see what moved between two stamps, including breaking changes to variable names, diff the tags: the [tag list](https://github.com/excelano/axe/tags) is the index, and GitHub's `compare/v<old>...v<new>` view — or `git log v<old>..v<new>` in a checkout — shows the commits between any two. There is no releases page and there is not meant to be one. Axe is consumed by vendoring, and cleave ships through the Excelano apt repository, so a release would carry no artifact and no note the tag range does not already hold.
 
-The working copy carries a `-dev` suffix — `1.7.8-dev` for work heading to 1.7.8 — and is stamped plain only when you tag. Every consumer vendors a subset of files rather than tracking this tree, so a site reports the version it last published, not whatever the working copy holds; the suffix is what separates a site running a tagged release from one running a snapshot of unreleased work. Stamp with `./set-version.sh`, then re-publish the consumers a change affects; each keeps a small `update-axe.sh` in its repo root for that, and a copy left behind is invisible until someone checks. Sites that lag are a normal state, not a fault — that is the point of vendoring — but they are worth auditing after a release.
+The working copy carries a `-dev` suffix on the version it is heading toward, and is stamped plain only when you tag. Every consumer vendors a subset of files rather than tracking this tree, so a site reports the version it last published, not whatever the working copy holds; the suffix is what separates a site running a tagged release from one running a snapshot of unreleased work. Stamp with `./set-version.sh`, then re-publish the consumers a change affects; each keeps a small `update-axe.sh` in its repo root for that, and a copy left behind is invisible until someone checks. Sites that lag are a normal state, not a fault — that is the point of vendoring — but they are worth auditing after a release.
