@@ -8,7 +8,7 @@ It doesn't sit in a familiar category, and it isn't trying to. It isn't a utilit
 
 The web runs on a document metaphor. A server sends a document and the requestor renders it; a browser, at its core, is a document viewer. But it's a selective one. It renders HTML, images, and PDF natively, and for nearly everything else it gives up and downloads the file. The axe viewer picks up a defined slice of what the browser abandons: standardized, text-based formats that carry visual structure worth rendering and have no native browser renderer. CSV, Markdown, iCalendar, TOML, DocLang. It's the renderer the browser never shipped — point it at one of those files with `?url=`, and it renders it on-brand. (Browsing the directories that hold those files is a separate tool, [browse](https://github.com/anderix/browse), which hands each file back to this viewer to render.)
 
-That boundary is a door policy, not an accident. A format earns a place in the viewer when it is text, standardized, structurally renderable, unrendered by browsers, and read as documents. That last test is about how files in a format are used, not what the format was designed for — CSV was invented to move data between programs, and it is here because people sit and read tables. JSON stays out: browsers already render it. YAML stays out on the *standardized* test rather than the document one, because it has competing versions and implicit type coercion, so two parsers can disagree about what the same file means — and a renderer that silently picks one reading is worse than no renderer at all. TOML is in. It has one specification, one unambiguous data model, and a structure — tables, arrays of tables — that is genuinely renderable; and while it was designed for configuration, a great deal of TOML is written to be read: inventories, manifests, metadata records describing a set of files. Those are documents by use, whatever the format's origin. DocLang is in on the plainest reading of the rule: it is the XML a document converter writes when it has read a PDF or a scan, so every file in the format is a document by definition, and a browser handed one shows a tag tree, which is the markup and not the document, the same way it shows Markdown as text. The set is still curated on purpose — which is why this is the axe viewer, not a universal one.
+That boundary is a door policy, not an accident. A format belongs in the viewer when it is text, standardized, structurally renderable, unrendered by browsers, and read as documents. That last test is about how files in a format are used, not what the format was designed for — CSV was invented to move data between programs, and it is here because people sit and read tables. JSON stays out: browsers already render it. YAML stays out on the *standardized* test rather than the document one, because it has competing versions and implicit type coercion, so two parsers can disagree about what the same file means — and a renderer that silently picks one reading is worse than no renderer at all. TOML is in. It has one specification, one unambiguous data model, and a structure — tables, arrays of tables — that is genuinely renderable; and while it was designed for configuration, a great deal of TOML is written to be read: inventories, manifests, metadata records describing a set of files. Those are documents by use, whatever the format's origin. DocLang is in on the plainest reading of the rule: it is the XML a document converter writes when it has read a PDF or a scan, so every file in the format is a document by definition, and a browser handed one shows a tag tree, which is the markup and not the document, the same way it shows Markdown as text. The set is still curated on purpose — which is why this is the axe viewer, not a universal one.
 
 The components carry no look of their own, and that is deliberate. A standalone widget ships its own complete styling and imposes it on every host; an axe component ships almost none and wears the host's identity through the variable contract instead. That dependence is the reason the components live inside Axe rather than as separate libraries. They are built on the CSS base as a substrate, not decorated by it as a convenience — pull the base out from under the calendar and its toolbar buttons drop to bare browser defaults. The coupling isn't a packaging detail to engineer away; it is what the components are for. They are the proof that the contract is worth depending on.
 
@@ -62,7 +62,7 @@ curl -fsSL https://excelano.com/apt/setup.sh | sudo sh   # one-time
 sudo apt install cleave
 ```
 
-The package is named for the tool, not the framework. It installs the `cleave` command plus the Axe assets that command inlines, as its own data under `/usr/share/cleave` — it does not deploy Axe as a web framework, and nothing on a Debian box consumes Axe from there. Sites get Axe from this repository, by symlink or by vendoring.
+The package is named for the tool, not the framework. It installs the `cleave` command plus the Axe assets that command inlines, as its own data under `/usr/share/cleave` — it does not deploy Axe as a web framework, and nothing on a Debian box consumes Axe from there. Sites get Axe from this repository by vendoring it.
 
 From a checkout, symlinking onto your PATH works too: `ln -s "$PWD/cli/cleave.py" ~/bin/cleave`. cleave looks for the Axe assets in three places, in order — `$AXE_ROOT` if you set it, its own grandparent directory, then `/usr/share/cleave`. The checkout is checked before the package on purpose: running cleave from a working tree bakes that tree's viewer, not whatever version happens to be installed.
 
@@ -103,7 +103,7 @@ view/
 
 Everything in Axe is a web asset a site serves, with one exception: `cli/` is the command-line side, and a site that deploys Axe should exclude it. It is a directory rather than a loose file so the exclusion is a single unambiguous rule, and so that nothing there is ever mistaken for something to serve. `cleave` needs the viewer and the stylesheets to do its job; the viewer and the stylesheets never need `cleave`.
 
-The same one-way rule places the two repositories: Axe lives in `excelano`, and [browse](https://github.com/anderix/browse), which consumes the viewer and the stylesheets and is needed by neither, lives in `anderix`. Sites pick Axe up through an `axe -> ~/axe` filesystem symlink, whichever organization owns the repository.
+The same one-way rule places the two repositories: Axe lives in `excelano`, and [browse](https://github.com/anderix/browse), which consumes the viewer and the stylesheets and is needed by neither, lives in `anderix`. Sites vendor Axe whichever organization owns them: each keeps an `update-axe.sh` that copies the servable files into its own `axe/` directory.
 
 Each project provides its own `brand.css` defining the visual identity. `axe.css` is universal and shared. Project-specific component classes go in the project's own stylesheet.
 
@@ -116,7 +116,7 @@ Each project provides its own `brand.css` defining the visual identity. `axe.css
 
 ## Layout
 
-Axe provides two layout containers:
+Axe provides these layout containers:
 
 `<main>` is a full-width container (max 1100px, no surface background). Use it for app-like pages.
 
@@ -179,7 +179,7 @@ The axe viewer renders `.toml` the same way it renders CSV and Markdown. There i
 view/index.html?url=path/to/inventory.toml
 ```
 
-The mapping is the whole design:
+The shape of the document decides the page:
 
 | In the document | On the page |
 | --- | --- |
@@ -303,7 +303,7 @@ Tints and shades are generated by RGB mixing toward white or black at stops of 3
 
 **Mobile first.** Base styles target small screens. Use `min-width` media queries to expand.
 
-**JavaScript only where rendering needs it.** The CSS base is styling alone; `theme.js` adds theme detection and the toggle. The components that render documents — the calendar engine behind the viewer — carry their own JavaScript, with no build step and a small set of vendored dependencies (a Markdown parser and a sanitizer). A component earns its script by rendering a format CSS can't.
+**JavaScript only where rendering needs it.** The CSS base is styling alone; `theme.js` adds theme detection and the toggle. The components that render documents — the calendar engine behind the viewer — carry their own JavaScript, with no build step and a small set of vendored dependencies (a Markdown parser and a sanitizer). A component carries script only to render a format CSS can't.
 
 **When in doubt, put it in the project first.** Promote to the framework when a second project needs it.
 

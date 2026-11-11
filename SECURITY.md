@@ -2,26 +2,35 @@
 
 ## Reporting a vulnerability
 
-Please report suspected vulnerabilities privately through GitHub Security Advisories at https://github.com/excelano/axe/security/advisories/new. If you would rather not use GitHub, email david.anderson@excelano.com instead. I aim to respond within seven days.
+Please report suspected vulnerabilities privately, using the **Report a vulnerability** button on the Security tab of this repository. If that button is not there, or you would rather not go through GitHub, email david.anderson@excelano.com instead. I aim to respond within seven days.
 
 Please do not open public issues for security problems.
 
 ## Supported versions
 
-Axe is vendored into each consuming site rather than installed from a package registry. Security fixes ship through `main`; pull the latest `axe.css`, `calendar.js`, `view/`, and the files under `dependencies/`, then redeploy to apply them. There are no maintained release branches.
+The latest release receives security fixes. Older versions are not supported. A fix ships in a tagged release: a site picks it up by running its `update-axe.sh`, which copies the servable files into the site's `axe/` directory, and redeploying, and the `cleave` package picks it up through apt.
 
-## Security model — read this before deploying the viewer
+## What Axe can access
 
-The CSS framework itself (`axe.css`, `calendar.css`, `default.css`, `theme.js`) is static styling with no attack surface. The security model is entirely about the **viewer** (`view/`) and the **calendar component** (`calendar.js`), because their whole job is to turn a document into live HTML in your site's origin.
+The viewer is client-side: `view/index.html` plus the vendored scripts. It has no server-side code, reads no filesystem, and fetches nothing it isn't pointed at; what it may fetch is set out under What the viewer fetches. Directory browsing is a separate tool, [browse](https://github.com/anderix/browse), which carries the only server-side surface and its own `SECURITY.md`. It is in a different GitHub organization (`anderix`, where this repository is `excelano`), so reviewing Axe does not review it; read its `SECURITY.md` before deploying it, deploy it only where you want directory listing, and confine it there.
 
-Treat every document the viewer renders as if it were executable code. A `.md`, `.csv`, `.ics`, `.toml`, or `.dclg` file is markup, and markup that reaches the DOM can carry script. Axe defends against this in two places, but the defenses are mitigation, not a license to render anything from anywhere:
+`cleave` reads the document it is given and the Axe assets it inlines, and writes one HTML file.
+
+## What Axe stores
+
+The theme toggle saves the chosen theme in the browser's `localStorage` under the key `theme`. Nothing else is stored, and nothing is sent anywhere.
+
+## Security model
+
+The CSS framework itself (`axe.css`, `calendar.css`, `default.css`, `theme.js`) is static styling with no attack surface. The security model is about the **viewer** (`view/`) and the **calendar component** (`calendar.js`), because their job is to turn a document into live HTML in your site's origin.
+
+Treat every document the viewer renders as if it were executable code. A `.md`, `.csv`, `.ics`, `.toml`, or `.dclg` file is markup, and markup that reaches the DOM can carry script. Axe defends against this wherever markup could enter, but the defenses are mitigation, not a license to render anything from anywhere:
 
 - **Markdown** is run through DOMPurify (`dependencies/purify.min.js`) before insertion, which strips `<script>`, `onerror`/`onload` and other event-handler attributes, and `javascript:` URLs. Do not remove this step or render Markdown with `marked.parse()` directly — `marked` does not sanitize. This holds for the slide-deck rendering too (`?view=slides`): each slide is one chunk of the same Markdown run through the same DOMPurify step, so presenting a `.md` carries no attack surface the document rendering does not.
 - **Calendar event URLs** (the `URL:` property of an `.ics` event) are passed through a scheme allowlist before becoming a link `href`. Only `http:`, `https:`, and `mailto:` survive; a `javascript:` URL is dropped and the event renders as plain text.
-
 - **TOML links** go through the same kind of scheme allowlist. A string becomes a link only when it is an `http:`/`https:`/`mailto:` URL, a bare email address, or a relative path ending in a document extension; any other scheme — `javascript:`, `data:` — is rejected outright rather than filtered, and the string renders as text. Relative paths resolve against the document's own URL, so a rendered file can only point within reach of where it already lives.
 
-CSV and TSV cells are HTML-escaped on the way into the table, so a spreadsheet cannot inject markup. TOML needs no sanitizer for a different reason: `toml.js` yields data rather than markup, and the renderer builds every node with `textContent`, so a document never contributes HTML in the first place. DocLang is rendered the same way: the browser's `DOMParser` reads the XML into a tree, and the renderer builds HTML nodes from that tree with `createElement` and text nodes, so document text never reaches `innerHTML`. Its links go through the same scheme whitelist as TOML — `<href>` becomes a link only for `http:`/`https:`/`mailto:`, and a picture's `<src>` becomes an image only for those, `data:image/`, or a relative path resolved against the document — and an `<xref>` becomes an in-page anchor whose id is built from the thread number, not from document text. Note that an image URL is a request: a document can point an `<img>` at a third-party host, which the page's CSP (`img-src 'self' data:`) blocks unless you widen it.
+CSV and TSV cells are HTML-escaped on the way into the table, so a spreadsheet cannot inject markup. TOML needs no sanitizer for a different reason: `toml.js` yields data rather than markup, and the renderer builds every node with `textContent`, so a document never contributes HTML in the first place. DocLang is rendered the same way: the browser's `DOMParser` reads the XML into a tree, and the renderer builds HTML nodes from that tree with `createElement` and text nodes, so document text never reaches `innerHTML`. Its links go through the same scheme allowlist as TOML — `<href>` becomes a link only for `http:`/`https:`/`mailto:`, and a picture's `<src>` becomes an image only for those, `data:image/`, or a relative path resolved against the document — and an `<xref>` becomes an in-page anchor whose id is built from the thread number, not from document text. Note that an image URL is a request: a document can point an `<img>` at a third-party host, which the page's CSP (`img-src 'self' data:`) blocks unless you widen it.
 
 ## What the viewer fetches
 
@@ -31,11 +40,7 @@ External URLs (`?url=https://…`) are **denied by default**. Rendering third-pa
 
 ## Baked (embedded) documents
 
-A file produced by `cli/cleave.py` carries its document inlined in a hidden `<textarea id="axe-embed">` and renders it instead of fetching. The document still passes through the same renderers and the same DOMPurify sanitization as the fetched path, so a baked file carries no attack surface the live viewer does not — the only difference is where the bytes come from. The document is escaped as RCDATA (`&` and `<`) so it cannot break out of the textarea, and because nothing is fetched, a baked file makes no network requests at all. Treat a baked `.html` as exactly as trustworthy as the document and the brand CSS that went into it.
-
-## No server-side code
-
-The viewer is entirely client-side — `view/index.html` plus the vendored scripts. It has no PHP, reads no filesystem, and serves nothing it isn't pointed at. Directory browsing used to live here as a `list.php` backend; it now lives in a separate tool, [browse](https://github.com/anderix/browse), which carries the only server-side surface and its own `SECURITY.md`. That tool is in a different GitHub organization (`anderix`, where this repository is `excelano`), so reviewing Axe does not review it — read its `SECURITY.md` separately before deploying it. Deploy browse only where you actually want directory listing, and confine it there.
+A file produced by `cli/cleave.py` carries its document inlined in a hidden `<textarea id="axe-embed">` and renders it instead of fetching. The document still passes through the same renderers and the same DOMPurify sanitization as the fetched path, so a baked file carries no attack surface the live viewer does not — the only difference is where the bytes come from. The document is escaped as RCDATA (`&` and `<`) so it cannot break out of the textarea, and because nothing is fetched, a baked file makes no network requests at all. Treat a baked `.html` as trustworthy only as the document and the brand CSS that went into it.
 
 ## Operator responsibilities
 
