@@ -1,4 +1,7 @@
 #!/bin/bash
+# Author: David M. Anderson
+# Built with AI assistance (Claude, Anthropic)
+#
 # build-deb.sh — build the cleave .deb. Prints the .deb path.
 #
 # The package is named for the tool, not the framework: it installs a
@@ -8,7 +11,7 @@
 # get Axe from the repository, by symlink or by vendoring.
 #
 # Publish it with the excelano-apt repo:
-#   ./add-deb.sh "$(~/axe/packaging/build-deb.sh)" && ./rebuild.sh
+#   ./add-deb.sh "$(~/repos/web/axe/packaging/build-deb.sh)" && ./rebuild.sh
 
 set -euo pipefail
 
