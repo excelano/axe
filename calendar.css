@@ -212,7 +212,7 @@
     cursor: pointer;
 }
 
-.cal-dp-day.is-outside { color: var(--color-text-muted); opacity: 0.5; }
+.cal-dp-day.is-outside { color: var(--color-text-muted); }
 
 .cal-dp-day:hover {
     background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
@@ -600,14 +600,14 @@
 .cal-date {
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    color: var(--color-text-muted);
+    color: var(--color-text);
     padding: 0.2rem 0.45rem;
     z-index: 1;
     pointer-events: none;
 }
 
 .cal-date.is-outside {
-    opacity: 0.45;
+    color: var(--color-text-muted);
 }
 
 /* The day number rides in its own span so today gets a tight circular
