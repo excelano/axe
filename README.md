@@ -124,7 +124,9 @@ Axe provides these layout containers:
 
 `<section>` groups content with border separators.
 
-`.grid` creates a responsive card grid. Children can be `<article>` or `<a>` elements. (The document components carry their own classes, namespaced under `.axe-cal` and the viewer chrome.)
+`.grid` creates a responsive card grid. Children can be `<article>` or `<a>` elements.
+
+`.visually-hidden` keeps an element in the accessibility tree while drawing nothing, for a heading or label that screen readers need and the layout already implies. (The document components carry their own classes, namespaced under `.axe-cal` and the viewer chrome.)
 
 ## Calendar (iCalendar)
 
