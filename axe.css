@@ -96,15 +96,13 @@ nav ul li a {
     padding: 0.4rem 0.875rem;
     border-radius: var(--radius);
     font-size: 0.9rem;
-    opacity: 0.88;
-    transition: background 0.15s, opacity 0.15s;
+    transition: background 0.15s;
 }
 
 nav ul li a:hover {
     background: color-mix(in srgb, var(--color-nav-text) 12%, transparent);
     color: var(--color-nav-text);
     text-decoration: none;
-    opacity: 1;
 }
 
 
